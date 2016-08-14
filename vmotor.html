@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>V-Motor</title>      
+</head>
+
+<body>
+    <h2>V-Motor</h2>             
+    <canvas id="c" width="800" height="800" style="border-width:1px;border-style:solid"></canvas>
+    <br>
+    <label for="phislider">&phi;:
+    <input type="range" id="phislider" style="width:500px;vertical-align:middle;padding:0" min="0" max="360" value="0">
+    <output id="phiout" for="phislider">0</output>°
+    </label>
+    <br>
+    <label for="alphaslider">&alpha;:
+    <input type="range" id="alphaslider" style="width:500px;vertical-align:middle;padding:0" min="0" max="360" value="0">
+    <output id="alphaout" for="alphaslider">0</output>°
+    </label>
+  
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>    
+
+    <script>
+
+var cnv = document.getElementById('c'),
+    ctx = cnv.getContext('2d'),
+    phislider = document.getElementById('phislider'),
+    phiout = document.getElementById('phiout'),
+    alphaslider = document.getElementById('alphaslider'),
+    alphaout = document.getElementById('alphaout'),    
+
+    pi = Math.PI,
+
+    phi = 0.1, // Laufvariable
+    alpha = pi/4,
+
+    mec = {
+      a: 85,
+      b: 291,
+      get psi() { return Math.asin(- this.a*Math.sin(phi)/this.b) },	
+	  get s() { return this.a*Math.cos(phi) + Math.sqrt(- this.a*this.a*Math.sin(phi)*Math.sin(phi) + this.b*this.b) },
+      get ephi() { return { x:Math.cos(phi), y:Math.sin(phi)}; },
+	  get epsi() { return { x:Math.cos(this.psi), y:Math.sin(this.psi)}; },
+      get A() { return { x:this.a*this.ephi.x, y:this.a*this.ephi.y };},
+      get B() { return { x:this.s, y:0 }; }
+      },  
+ 
+    g = g2(),  // definiert Kurbel als g2() Objekt
+
+    // baut und initialisiert statische Umgebung
+    world = g2().clr().cartesian().zoom(0.9)
+                .pan(400, 400) // Nullpunkt verschoben   
+                .use(g),
+
+    dirty = true  // wenn true gibt es was zu aktualisieren
+    ;
+
+function position() {  
+    g.del()
+     
+/**
+ * ------------------------------------------------
+ * KOLBEN 1
+ * ------------------------------------------------
+ */
+
+     .beg({w:alpha})  // globale Transformation
+
+        // Pleuel
+        .beg({x:mec.A.x ,y:mec.A.y, w:mec.psi})
+           .img("./img/rod.png",-37,-100/2,   350,100) // rod
+        .end() 
+
+        // Kurbel
+        .beg({w:phi})
+           .img("./img/crank.png",-50,-53.5,160,107) // crank
+        .end()   
+     
+        // Kolben
+        .beg({x:mec.B.x ,y:0})
+           .img("./img/piston.png",-18,-140/2,   70,140) // rod
+        .end()
+        
+     .end()  
+
+/**
+ * ------------------------------------------------
+ * KOLBEN 2
+ * ------------------------------------------------
+ */
+
+     .beg({w:alpha + pi/2}, phi=phi+pi)  // globale Transformation
+
+        // Pleuel
+        .beg({x:mec.A.x ,y:mec.A.y, w:mec.psi})
+           .img("./img/rod.png",-37,-100/2,   350,100) // rod
+        .end() 
+
+        // Kurbel
+        .beg({w:phi})
+           .img("./img/crank.png",-50,-53.5,160,107) // crank
+        .end()   
+     
+        // Kolben
+        .beg({x:mec.B.x ,y:0})
+           .img("./img/piston.png",-18,-140/2,   70,140) // rod
+        .end()
+        
+     .end(phi=phi-pi);  // phi zurücksetzen
+
+}        
+
+function render() {
+    if (dirty) {
+        position();  // aktualisiere Position
+        world.exe(ctx);  // rendert world in den Context
+        dirty = false;
+    }
+    requestAnimationFrame(render);  // asynchroner callback von render(), keine Rekursion!
+}
+
+function setPhi() {
+    if (phislider.value != phiout.value) {
+        phi = phislider.value*pi/180;
+        phiout.innerHTML = phislider.value;
+        dirty = true;
+    }
+}
+
+function setAlpha() {
+    if (alphaslider.value != alphaout.value) {
+        alpha = alphaslider.value*pi/180;
+        alphaout.innerHTML = alphaslider.value;
+        dirty = true;
+    }
+}
+
+/*
+ *  Initialisierung
+ */
+
+// Eventlistener hinzufuegen
+phislider.addEventListener("input",setPhi);
+alphaslider.addEventListener("input",setAlpha);  // bei hohem Rechenaufwand ist "change" sinnvoller
+
+alphaslider.value = alpha*180/pi; 
+setAlpha();
+
+// Animation starten
+requestAnimationFrame(render);
+
+    </script>
+</body>
+</html>
