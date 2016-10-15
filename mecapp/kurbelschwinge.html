@@ -1,0 +1,202 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset='utf-8'>
+	<title>
+		Kurbelschwinge
+	</title>
+    <style>
+        #qb,#qc,#qd,#qe {
+            margin-left:1em;
+          /*  display: inline-block;*/
+        }
+    </style>
+</head>
+
+<body>
+  <div id="all">
+	  <h1>Kurbelschwinge</h1>
+	  <canvas id="cv" width="600" height="300" style="border-width:1px;border-style:solid"></canvas><br>
+	  <p>&phi;:
+	    <input id="range" type="range" style="width:600px;vertical-align:middle;margin-left:3px;padding:0" min="0" max="360" value="0" step="1" />
+	    <output id="output" for="range" style="text-align:right;">0</output>°<br>
+      </p>
+      <span id="qa"></span><span id="qb"></span><span id="qc"></span><span id="qd"></span><span id="qe"></span>
+  </div>
+
+	<script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
+	<script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>
+
+	<script>
+
+// source: http://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+function position() {
+    var ephi = mec.ephi,
+        etheta = mec.etheta,
+        epsi = mec.epsi,
+        A0 = mec.A0, B0 = mec.B0,
+        A = mec.A, B = mec.B
+    ;
+
+    g.del()
+    // .link2([A0, A, B, B0])
+     .bar2(B, B0)
+       .label("c","mid","left")
+     .bar2(A, B)
+       .label("b","mid","left")
+     .bar2(A0, A)
+       .label("a","mid","left")
+     .use("nod",A)
+     .use("nod",B)
+}
+
+function setPhi() {
+    mec.phi = (output.value = range.value) / 180 * Math.PI;
+}
+
+function render() {
+    position();
+    world.exe(ctx);
+    requestAnimationFrame(render);
+}
+
+function grashof() {
+    var linkArray = [mec.a, mec.b, mec.c, Math.sqrt(mec.d*mec.d + mec.e*mec.e)];
+    linkArray.sort(function(a, b) {
+        return a - b;
+    });
+   // console.log("sorted links = " + linkArray);
+    // Grashof geht von kürzestem Glied umlaufend aus? -> && mec.a<=mec.c
+    return (linkArray[3]+linkArray[0] <= linkArray[1]+linkArray[2] && mec.a<=mec.c);
+}
+
+
+var cnv = document.getElementById("cv"),
+    ctx = cnv.getContext("2d"),
+    range = document.getElementById("range"),
+    output = document.getElementById("output"),
+ 
+    // get queries
+    queryObject = {
+        a: +getParameterByName('a'),
+        b: +getParameterByName('b'),
+        c: +getParameterByName('c'),
+        d: +getParameterByName('d'),
+        e: +getParameterByName('e')
+    },
+
+    mec = {
+        phi: 0,
+        a: isNaN(queryObject.a)||queryObject.a<=0 ?  80 : queryObject.a,
+        b: isNaN(queryObject.b)||queryObject.b<=0 ? 200 : queryObject.b,
+        c: isNaN(queryObject.c)||queryObject.c<=0 ? 100 : queryObject.c,
+        d: isNaN(queryObject.d)||queryObject.d<=0 ? 200 : queryObject.d,
+        e: isNaN(queryObject.e) ? 0 : queryObject.e,  
+
+        get ephi() {
+            return {x: Math.cos(this.phi), y: Math.sin(this.phi)};
+        },
+        
+        get g() {
+            return {x: this.d2*this.ealpha.x - this.a*this.ephi.x, y:  this.d2*this.ealpha.y - this.a*this.ephi.y};
+        },
+        
+        get gg() {
+            return this.a*this.a + this.d2*this.d2 - 2*this.a*this.d2*Math.cos(this.alpha - this.phi);
+        },
+        
+        get d2() {
+            return Math.sqrt(this.d*this.d+this.e*this.e);
+        },
+        
+        get alpha() {
+            return Math.atan(this.e/this.d);
+        },
+        
+        get ealpha() {
+            return {x: Math.cos(this.alpha), y: Math.sin(this.alpha)};
+        },
+        
+        get theta() {
+            var gg = this.gg, bb_gg = (this.b*this.b)/gg, g = this.g,
+                lambda = 0.5 * (bb_gg - this.c*this.c/gg + 1),
+                mue = Math.sqrt(bb_gg - lambda * lambda);
+            return Math.atan2((1/this.b) * (lambda*g.y + mue*g.x), (1/this.b)*(lambda*g.x - mue*g.y))
+        },
+        
+        get etheta() {
+            return {x: Math.cos(this.theta), y: Math.sin(this.theta)};
+        },
+        
+        get psi() {
+            var etheta = this.etheta;
+            return Math.atan2((1/this.c)*(this.b*etheta.y - this.g.y), (1/this.c)*(this.b*etheta.x - this.g.x))
+        },
+        
+        get epsi() {
+            return {x: Math.cos(this.psi), y: Math.sin(this.psi)};
+        },
+        
+        // joints
+        A0: {x: 0, y: 0},
+
+        get B0() {
+            return {x: this.A0.x + this.d, y: this.A0.y + this.e};
+        },
+        
+        get A() {
+            return {x: this.A0.x + this.a*this.ephi.x, y: this.A0.y + this.a*this.ephi.y};
+        },
+        
+        get B() {
+            return {x: this.B0.x + this.c*this.epsi.x, y: this.B0.y + this.c*this.epsi.y};
+        }
+    },
+
+    g = g2(),
+    world = g2().clr().cartesian().grid()
+                .pan(mec.a + 10, mec.a + 10)
+                .style({ls: "black", lw: 3, ld: [], ml:5, foz:16, fow:"bold"})
+                .lin(mec.A0.x, mec.A0.y, mec.B0.x, mec.B0.y, {ld:"@dashdot"})
+                  .label("d","mid","right")
+                .use(g)
+                .use("nodfix", {x: mec.A0.x, y: mec.A0.y})
+                .use("nodfix", {x: mec.B0.x, y: mec.B0.y})
+;
+
+
+// initialisation
+if (grashof()) {
+    cnv.width = 2*mec.a + mec.c + mec.d;
+    cnv.height = 2*mec.a + mec.c + mec.e;
+    range.style.width = (cnv.width<1000) ? cnv.width-45 + "px" : 1000 + "px" ;
+
+    range.addEventListener("input", setPhi, false);
+
+    document.getElementById("qa").innerHTML = "a = " + mec.a + " "; 
+    document.getElementById("qb").innerHTML = "b = " + mec.b;
+    document.getElementById("qc").innerHTML = "c = " + mec.c;
+    document.getElementById("qd").innerHTML = "d = " + mec.d;
+    document.getElementById("qe").innerHTML = "e = " + mec.e;
+
+    render();   
+
+} else {
+    document.getElementById("all").innerHTML = "Der Mechanismus ist mit diesen Parametern bei angetriebener Kurbel nicht umlauffähig!";
+};
+
+   </script>
+</body>
+
+</html>
