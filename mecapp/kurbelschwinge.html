@@ -1,3 +1,5 @@
+<!-- v0.2 -->
+
 <!doctype html>
 <html>
 
@@ -9,7 +11,6 @@
     <style>
         #qb,#qc,#qd,#qe {
             margin-left:1em;
-          /*  display: inline-block;*/
         }
     </style>
 </head>
@@ -69,16 +70,6 @@ function render() {
     position();
     world.exe(ctx);
     requestAnimationFrame(render);
-}
-
-function grashof() {
-    var linkArray = [mec.a, mec.b, mec.c, Math.sqrt(mec.d*mec.d + mec.e*mec.e)];
-    linkArray.sort(function(a, b) {
-        return a - b;
-    });
-   // console.log("sorted links = " + linkArray);
-    // Grashof geht von kürzestem Glied umlaufend aus? -> && mec.a<=mec.c
-    return (linkArray[3]+linkArray[0] <= linkArray[1]+linkArray[2] && mec.a<=mec.c);
 }
 
 
@@ -163,12 +154,10 @@ var cnv = document.getElementById("cv"),
             return {x: this.B0.x + this.c*this.epsi.x, y: this.B0.y + this.c*this.epsi.y};
         }
     },
-     
-    yOffset = mec.e<0 ? mec.a + Math.abs(mec.e) + 20 : mec.a + 20, //+ mec.e+mec.c*Math.cos(mec.psi-Math.PI/2),
 
     g = g2(),
     world = g2().clr().cartesian().grid()
-                .pan(mec.a + 20, yOffset)
+                .pan(mec.a + 10, mec.a + 10)
                 .style({ls: "black", lw: 3, ld: [], ml:5, foz:16, fow:"bold"})
                 .lin(mec.A0.x, mec.A0.y, mec.B0.x, mec.B0.y, {ld:"@dashdot"})
                   .label("d","mid","right")
@@ -179,9 +168,9 @@ var cnv = document.getElementById("cv"),
 
 
 // initialisation
-if (grashof()) {
+if (mec.a + mec.b + mec.c + mec.d - 2*Math.min(mec.a,mec.b,mec.c,mec.d) - 2*Math.max(mec.a,mec.b,mec.c,mec.d) > 0  &&  mec.a <= mec.c) { // Grashof condition + crank shorter than rocker
     cnv.width = 2*mec.a + mec.c + mec.d;
-    cnv.height = 2*mec.a + mec.c + Math.abs(mec.e);
+    cnv.height = 2*mec.a + mec.c + mec.e;
     range.style.width = (cnv.width<1000) ? cnv.width-45 + "px" : 1000 + "px" ;
 
     range.addEventListener("input", setPhi, false);
