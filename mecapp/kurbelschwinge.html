@@ -51,7 +51,6 @@ function position() {
     ;
 
     g.del()
-    // .link2([A0, A, B, B0])
      .bar2(B, B0)
        .label("c","mid","left")
      .bar2(A, B)
@@ -154,10 +153,12 @@ var cnv = document.getElementById("cv"),
             return {x: this.B0.x + this.c*this.epsi.x, y: this.B0.y + this.c*this.epsi.y};
         }
     },
+     
+    yOffset = mec.e<0 ? mec.a + Math.abs(mec.e) + 20 : mec.a + 20,
 
     g = g2(),
     world = g2().clr().cartesian().grid()
-                .pan(mec.a + 10, mec.a + 10)
+                .pan(mec.a + 20, yOffset)
                 .style({ls: "black", lw: 3, ld: [], ml:5, foz:16, fow:"bold"})
                 .lin(mec.A0.x, mec.A0.y, mec.B0.x, mec.B0.y, {ld:"@dashdot"})
                   .label("d","mid","right")
@@ -168,9 +169,10 @@ var cnv = document.getElementById("cv"),
 
 
 // initialisation
-if (mec.a + mec.b + mec.c + mec.d - 2*Math.min(mec.a,mec.b,mec.c,mec.d) - 2*Math.max(mec.a,mec.b,mec.c,mec.d) > 0  &&  mec.a <= mec.c) { // Grashof condition + crank shorter than rocker
+// Grashof condition + crank shorter than rocker
+if (mec.a + mec.b + mec.c + mec.d - 2*Math.min(mec.a,mec.b,mec.c,mec.d) - 2*Math.max(mec.a,mec.b,mec.c,mec.d) > 0  &&  mec.a <= mec.c) {
     cnv.width = 2*mec.a + mec.c + mec.d;
-    cnv.height = 2*mec.a + mec.c + mec.e;
+    cnv.height = 2*mec.a + mec.c + Math.abs(mec.e);
     range.style.width = (cnv.width<1000) ? cnv.width-45 + "px" : 1000 + "px" ;
 
     range.addEventListener("input", setPhi, false);
@@ -182,7 +184,6 @@ if (mec.a + mec.b + mec.c + mec.d - 2*Math.min(mec.a,mec.b,mec.c,mec.d) - 2*Math
     document.getElementById("qe").innerHTML = "e = " + mec.e;
 
     render();   
-
 } else {
     document.getElementById("all").innerHTML = "Der Mechanismus ist mit diesen Parametern bei angetriebener Kurbel nicht umlauffähig!";
 };
