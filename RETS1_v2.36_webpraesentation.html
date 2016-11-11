@@ -1,0 +1,893 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>RETS - Führungsmechanismus 1</title>
+    <style>
+		   #mg,#Ax,#N1 {
+		     display:inline;
+		   }
+		   #hub,#k,#s0,#s1,#S3,#Ay,#Ares,#N2,#Q1,#Q2,#button2 {
+		     display:inline;
+		     margin-left:10px;
+		   }
+       #slider-range {
+         position: absolute;
+         top:585px;
+         width:800px;
+         margin-left:10px;
+       }
+       #slider-range2 {
+         position: absolute;
+         top:540px;
+         margin-left:10px;
+       }
+       #canvas {
+         position:absolute;
+         width:1100px;
+         height:550px;
+       }
+       #links {
+         position:absolute;
+         left: 1030px;
+         top: 0%;
+         float:right;
+       }
+       #interactive {
+         position: absolute;
+         top:600px;
+       }
+    </style>
+</head>
+
+<body>
+
+   <div id="canvas">
+     <canvas id="c" width="1001" height="541"></canvas>
+   </div>
+   
+   <span id="slider-range2">
+   <p>
+   <label  for="phirange">Verstellbereich von &phi;:</label>
+   <input type="text" id="phirange" readonly style="border:0; color:#f6931f; font-weight:bold;"></p>
+   </span>
+   <div id="slider-range"></div>
+
+   <div id="interactive">
+     <p>&phi;:
+     <input id="range" type="range" style="width:600px;vertical-align:middle;margin-left:3px;padding:0" min="0" max="360" value="0" step="1" />
+     <output id="output" for="range" style="text-align:right;">0</output><br></p>
+
+     <p>Vorspannung Feder [mm]:
+     <input id="prel" type="range" style="width:444px;vertical-align:middle;margin-left:5px;padding:0" min="-258" max="258" value="0" step="any" disabled/>
+     <output id="outputpreload" for="prel" style="text-align:right;">0</output></p>
+
+     <p>globale Rotation:
+     <input id="xi" type="range" style="width:444px;vertical-align:middle;margin-left:5px;padding:0" min="0" max="360" value="0" />
+     <output id="outputxi" for="xi" style="text-align:right;">0</output></p>     
+
+     <p id="mg"></p> <p id="hub" title="Es ist wichtig zu beachten auf welchem Bereich der Verstellbereich von &phi; liegt und Positionen an denen min-/maxspringlength in minmaxlength() ermittelt wird entsprechend anzupassen."></p> 
+     <p id="k"></p> <p id="s0"></p> <p id="s1"></p> 
+     <br>
+     <p id="T"></p> <p id="Ax"></p> <p id="Ay"></p> <p id="Ares"></p> <p id="S3"></p> 
+     <p>
+     <p id="N1"></p><p id="Q1"></p><p id="N2"></p><p id="Q2"></p> 
+     <p id="Tmax"></p>
+
+     <input type="checkbox" id="spring" ><label for="spring"> Gewichtsausgleich aktiviert</label>
+     <button id="button" disabled>Optimieren</button>
+     <input type="checkbox" id="dyn" ><label for="dyn"> Dynamik (Bremsen)</label>
+     <button id="button2" >Maximales Biegemoment</button>
+   </div>
+
+   <div id="links">
+     <p>a [mm]:
+     <input id="alen" type="range" style="width:462px;vertical-align:middle;margin-left:15px;padding:0" min="50" max="1500" value="200" step="10" />
+     <output id="outputa" for="alen" style="text-align:right;">200</output></p>
+
+     <p>b1 [mm]:
+     <input id="b1len" type="range" style="width:462px;vertical-align:middle;margin-left:7px;padding:0" min="500" max="2500" value="1030" step="10" />
+     <output id="outputb1" for="b1len" style="text-align:right;">1030</output></p>
+
+     <p>b2 [mm]:
+     <input id="b2len" type="range" style="width:462px;vertical-align:middle;margin-left:7px;padding:0" min="500" max="2500" value="1000" step="10" />
+     <output id="outputb2" for="b2len" style="text-align:right;">1000</output></p>
+
+     <p>c [mm]:
+     <input id="clen" type="range" style="width:462px;vertical-align:middle;margin-left:16px;padding:0" min="500" max="2500" value="2040" step="10" />
+     <output id="outputc" for="clen" style="text-align:right;">2040</output></p>
+
+     <p>d [mm]:
+     <input id="frame" type="range" style="width:462px;vertical-align:middle;margin-left:15px;padding:0" min="2000" max="3000" value="2840" step="10" />
+     <output id="outputframe" for="frame" style="text-align:right;">2840</output></p>
+
+     <p>e [mm]:
+     <input id="elen" type="range" style="width:462px;vertical-align:middle;margin-left:15px;padding:0" min="-1000" max="1000" value="-380" step="10" />
+     <output id="outpute" for="elen" style="text-align:right;">-380</output></p>
+
+     <br>
+     <p>
+     <label for="dacc">Verzögerung (> 0) [m/s²]: 
+     <input id="dacc" type="number" value="6.53" step="any"><p>
+   <!--  <button id="button3" >M<sub>y,max</sub> plotten</button></p> -->
+     <canvas id="c2" width="650" height="360"></canvas></p>
+   </div>
+
+   <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
+   <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>
+   <script src="https://gitcdn.xyz/repo/goessner/g2-chart/master/g2.chart.min.js"></script>
+
+   <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+   <script src="https://code.jquery.com/jquery-3.0.0.js"></script>
+   <script src="https://code.jquery.com/ui/jquery-ui-git.js"></script>
+
+   <script>
+   var ctx = document.getElementById("c").getContext("2d"),
+       viewport = ctx.canvas.getBoundingClientRect(),
+       ctx2 = document.getElementById("c2").getContext("2d"),
+       range = document.getElementById("range"),
+       output = document.getElementById("output"),
+       frame = document.getElementById("frame"),
+       outputframe = document.getElementById("outputframe"),
+       spring = document.getElementById("spring"),
+       prel = document.getElementById("prel"),
+       button = document.getElementById("button"),
+       button2 = document.getElementById("button2"),
+       button3 = document.getElementById("button3"),
+       xislider = document.getElementById("xi"),
+       xiout = document.getElementById("outputxi"),
+       dynamic = document.getElementById("dyn"),
+       dacc = document.getElementById("dacc"),
+
+       // Glieder
+       alen = document.getElementById("alen"),
+       outputa = document.getElementById("outputa"),
+       b1len = document.getElementById("b1len"),
+       outputb1 = document.getElementById("outputb1"),
+       b2len = document.getElementById("b2len"),
+       outputb2 = document.getElementById("outputb2"),
+       clen = document.getElementById("clen"),
+       outputc = document.getElementById("outputc"),   
+       elen = document.getElementById("elen"),
+       outpute = document.getElementById("outpute"),  
+
+       // Schnittgroessen
+       N1 = document.getElementById("N1"),
+       Q1 = document.getElementById("Q1"),
+       N2 = document.getElementById("N2"),
+       Q2 = document.getElementById("Q2"),
+
+       d = 2840, b1 = 1030, b2 = 1000, c = 2040, a = 200 /* war 455 */, m = 375, G = m * 9.81,
+       a2 = 6.53 /*siehe Tabelle*/, inertia = m*a2,
+       e = -380, // exzentrizitaet
+       d2 = Math.sqrt(d*d+e*e),
+       A0 = {x:0, y:0},
+       B0 = {x:A0.x + d, y:A0.y + e},
+       pi = Math.PI,
+
+       minrange = +range.min,
+       maxrange = +range.max,
+
+       maxTorque = maxAngle = 0,
+       phi = minrange*pi/180,
+       xi = 0,// 10*pi/180,
+
+       g = g2(),
+       g3 = g2(),
+       ch = g2(),
+       world = g2().clr().cartesian().grid().zoom(0.21,150,200)
+                //   .style({ lw:10, foc:"orange", fow:"bold", foz:16 })
+                //   .avec({x:400, y:80}, 20, pi/4, 3/2 * pi, {lw:10, ls:"orange"})
+                //      .label("T","mid","right")
+                   .use(g, {x:400, y:80}),
+                //   .use("nodfix", { x:400, y:80 }),
+
+       mec = {
+         get G() { return {x: G*Math.cos(3/2*pi - xi), y: G*Math.sin(3/2*pi - xi)}; },
+
+         get GBrems() { return {x: (G + inertia)*Math.cos(3/2*pi - xi), y: (G + inertia)*Math.sin(3/2*pi - xi)}; },
+
+         get alpha() { return Math.atan(e/d); },
+
+         get ealpha() { return {x: Math.cos(this.alpha), y: Math.sin(this.alpha)}; },
+
+         get ephi() { return { x:Math.cos(phi), y:Math.sin(phi) }; },
+
+         get g() { return {x: d2*this.ealpha.x - a*this.ephi.x, y:  d2*this.ealpha.y - a*this.ephi.y}; },
+
+         get gg() { return a*a + d2*d2 - 2*a*d2*Math.cos(this.alpha - phi); },
+
+         get theta() {
+            var gg = this.gg, b1b1_gg = (b1*b1)/gg, g = this.g,
+                lambda = 0.5*(b1b1_gg - c*c/gg + 1),
+                mue = Math.sqrt(b1b1_gg - lambda*lambda);
+            return Math.atan2( (1/b1)*(lambda*g.y + mue*g.x), (1/b1)*(lambda*g.x - mue*g.y) )
+         },
+
+         get etheta() { return { x:Math.cos(this.theta), y:Math.sin(this.theta)}; },
+
+         get psi() {
+            var etheta = this.etheta;
+            return Math.atan2( (1/c)*(b1*etheta.y - this.g.y), (1/c)*(b1*etheta.x - this.g.x) )
+         },
+
+         get epsi() { return { x:Math.cos(this.psi), y:Math.sin(this.psi)}; },
+
+
+         // Gelenkpunkte
+         get A() { return {x:A0.x + a*this.ephi.x, y:A0.y + a*this.ephi.y}; },
+
+         get B() { return {x:this.A.x + (b1)*this.etheta.x, y:this.A.y + (b1)*this.etheta.y}; },
+
+         get B2() { return {x:B0.x + (c)*this.epsi.x, y:B0.y + (c)*this.epsi.y}; },
+
+         get K() { return {x:this.A.x + (b1 + b2)*this.etheta.x, y:this.A.y + (b1 + b2)*this.etheta.y}; },
+
+         get hdiff() { return d2*Math.sin(xi+this.alpha); },
+
+         get deff() { return d2*Math.cos(xi+this.alpha); },
+
+         get vecStart() { return {x:mec.K.x - mec.lwscl*100*Math.sin(-xi), y:mec.K.y + mec.lwscl*100*Math.cos(-xi)}; },
+
+
+         // Gewichtsausgleich
+         get F0() { return {x:d2*0.65*this.ealpha.x, y:B0.y} }, // { return {x:d2*0.65*this.ealpha.x, y:d2*0.65*this.ealpha.y} },
+
+         get F0K() { return {x:this.K.x - this.F0.x, y:this.K.y - this.F0.y } },
+
+         get F0KF0K() { return this.F0K.x*this.F0K.x + this.F0K.y*this.F0K.y; },
+
+         get deltax() { return Math.sqrt(this.F0KF0K) - (maxspringlength + preload); },
+
+         get psi2() { return Math.atan2( this.F0K.y, this.F0K.x ); },  // Winkel zwischen F0K und e_x
+
+         // optimale Federkonstante [N/mm] (Ruhelage max) aus Energieerhaltungssatz
+         get k() { return kfak;},
+
+         get F() {
+             var F;
+             if (spring.checked) {
+                F = -this.k*this.deltax;
+             } else {
+                F = 0;
+             }
+             return { x:F*Math.cos(this.psi2), y:F*Math.sin(this.psi2) };
+         },
+         
+         get Falt() {
+             var F;
+             if (spring.checked) {
+                F = -this.k*this.deltax;
+             } else {
+                F = 0;
+             }
+             return { x:F*(Math.cos(-xi)*Math.cos(this.psi2) - Math.sin(-xi)*Math.sin(this.psi2)), y:F*(Math.sin(-xi)*Math.cos(this.psi2) + Math.sin(this.psi2)*Math.cos(-xi)) };
+         },
+
+
+         // Antriebsmoment
+         get C2() {
+            var ephi = this.ephi, etheta = this.etheta, epsi = this.epsi;
+            return  ( - a*ephi.y*c*epsi.x + a*ephi.x*c*epsi.y ) / ( - b1*etheta.y*c*epsi.x + b1*etheta.x*c*epsi.y );
+         },
+
+         get C1() { return {x: - a*this.ephi.y - this.C2*(b1 + b2)*(- this.etheta.y),
+                            y:   a*this.ephi.x - this.C2*(b1 + b2)*this.etheta.x     };
+         },
+
+         get T() { 
+           if (dynamic.checked) {
+             return (-this.FA.x*a*this.ephi.y + this.FA.y*a*this.ephi.x )*0.001;
+           } else {
+             return ( (- this.G.x - this.F.x)*this.C1.x + (- this.G.y - this.F.y)*this.C1.y)*0.001;
+           };
+         },
+         
+
+         // Kräfte
+         get C3() {
+            var etheta = this.etheta, epsi = this.epsi;
+            return  ( b1 + b2 ) / ( b1*(epsi.y*etheta.x - epsi.x*etheta.y) );
+         },
+
+         get S3() { 
+           if (dynamic.checked) {
+             return  ( this.GBrems.x + this.F.x )*this.C3*(-this.etheta.y) + (this.GBrems.y + this.F.y)*this.C3*(this.etheta.x) ; // negatives Vorzeichen = Druckstab
+           } else {
+             return  ( this.G.x + this.F.x )*this.C3*(-this.etheta.y) + (this.G.y + this.F.y)*this.C3*(this.etheta.x) ; // negatives Vorzeichen = Druckstab
+           }
+         },
+
+         get FA() { 
+           if (dynamic.checked) {
+             return {x: this.S3*this.epsi.x - this.GBrems.x - this.F.x,
+                            y: this.S3*this.epsi.y - this.GBrems.y - this.F.y };
+           } else {
+             return {x: this.S3*this.epsi.x - this.G.x - this.F.x,
+                            y: this.S3*this.epsi.y - this.G.y - this.F.y };
+           }
+         },
+
+
+         // ##########################################
+         // #        Schnittgroessen Koppel          #
+         // ##########################################
+
+         // Bereich 1  -  0 < x < b1  
+         get N1() { return -this.FA.x*Math.cos(this.theta) - this.FA.y*Math.sin(this.theta); },
+
+         get Q1() { return -this.FA.x*Math.sin(this.theta) + this.FA.y*Math.cos(this.theta); },
+
+         M1: (x) => (0<=x && x<=b1) ? (mec.FA.y*Math.cos(mec.theta) - mec.FA.x*Math.sin(mec.theta))*x/1000 : console.log("Parameter im falschen Bereich!"), // x[mm], return[Nm]
+
+         // Bereich 2  -  b1 < x < b1+b2
+         get N2() { return -this.FA.x*Math.cos(this.theta) - this.FA.y*Math.sin(this.theta) - this.S3*Math.cos(pi - this.psi + this.theta); }, 
+
+         get Q2() { return -this.FA.x*Math.sin(this.theta) + this.FA.y*Math.cos(this.theta) - this.S3*Math.sin(pi - this.psi + this.theta); },
+
+         M2: (x) => (b1<=x && x<=(b1+b2)) ? ((mec.FA.y*Math.cos(mec.theta) - mec.FA.x*Math.sin(mec.theta))*x - mec.S3*Math.sin(pi - mec.psi + mec.theta)*(x-b1))/1000 : console.log("Parameter im falschen Bereich!"), // x[mm], return[Nm]
+
+         get KurKop() { return (-pi+phi-mec.theta)*180/pi; },
+
+         get KopSch() { return (pi-mec.psi+mec.theta)*180/pi; },
+         
+         lwscl: 2.5,
+
+         tempM: [],
+
+         tempPhi: [],
+
+         MyPlot: []
+
+       },
+
+       couplercurve = [],
+
+       minspringlength, maxspringlength, maxdisplacement, hub,  // beim Laden 1x durch minmaxlength() evaluieren
+
+       kfak = 1,
+
+       preload = 0
+       ;
+
+
+   // jquery Bereich-slider
+   $(function() {
+       $( "#slider-range" ).slider({
+       range: true,
+       min: -60,
+       max: 420,
+       values: [ 248, 400 ],
+       change: function( event, ui ) {
+           $( "#phirange" ).val(+ ui.values[ 0 ] + "° - " + ui.values[ 1 ] + "°" );
+           minrange = +(range.min = $( "#slider-range" ).slider( "values", 0 ));
+           maxrange = +(range.max = $( "#slider-range" ).slider( "values", 1 ));
+           setFrame();
+       }
+       });
+       $( "#phirange" ).val(+ $( "#slider-range" ).slider( "values", 0 ) +
+       "° - " + $( "#slider-range" ).slider( "values", 1 ) + "°" );
+       range.min = $( "#slider-range" ).slider( "values", 0 );
+       range.max = $( "#slider-range" ).slider( "values", 1 );
+   });
+
+   // Pan the view when user moves the pointer with any button pressed.
+function onmove(e) {
+   if (e.buttons !== undefined ? e.buttons : (e.which || e.button)) {
+      var dx = e.movementX || e.mozMovementX || e.webkitMovementX || 0,
+          dy = e.movementY || e.mozMovementY || e.webkitMovementY || 0;
+      world.pan(dx,-dy);   // look .. g2.pan uses device coordinates ..
+   }
+   render();
+};
+
+// Zoom the view when user uses the mouse wheel.
+function onwheel(e) { 
+   var delta = Math.max(-1,Math.min(1,e.deltaY||e.wheelDelta)),
+       x = e.clientX - Math.floor(viewport.left),
+       y = e.clientY - Math.floor(viewport.top);
+   mec.lwscl += delta>0?+1/10:-1/10    
+   world.zoom(delta>0?9/10:10/9,x,y);  // look .. g2.zoom again uses device coordinates ..
+   render();
+};
+
+function degs() {
+  var KurKop = (-pi+phi-mec.theta)*180/pi;
+  var KurSchw = (pi-mec.psi+mec.theta)*180/pi;
+};
+
+function pointdis(ax,ay,bx,by) {
+//let distance = Math.sqrt((bx-ax)*(bx-ax)+(by-ay)*(by-ay))
+//var distance = Math.sqrt( (bx-=ax)*bx + (by-=ay)*by );
+var bx = bx || 0;
+var by = by || 0;
+if (bx!=0 && bx!=0) { 
+  var x = bx-ax, y = by-ay;
+} else {
+  var x = ax , y = ay;
+}
+var distance;
+distance = Math.hypot(x,y);
+console.log("distance/abs = " + distance);
+return distance;
+}
+
+   function position() {
+      var ephi = mec.ephi, etheta = mec.etheta, epsi = mec.epsi,
+          A = mec.A, B = mec.B, K = mec.K, F0 = mec.F0;
+
+      g.del().cartesian() // wird cartesian hier nicht nochmal eingestellt, zeigt Vektorspitze von .vec in falsche Richtung, außerdem ändern sich die labelpositionen
+       
+       .beg({w:xi})
+      // .vec(B0,{r:mec.hdiff, w:3/2*pi-xi}, {lw: mec.lwscl*8, ls:"purple"})
+        // Feder alt
+     //  .vec(mec.K,{dx:mec.Falt.x, dy:mec.Falt.y}, {lw: mec.lwscl*4, ls:"purple"})
+        // Feder neu
+     //  .vec(mec.K,{dx:mec.F.x, dy:mec.F.y}, {lw: mec.lwscl*4, ls:"green"})
+       .style({ lw: mec.lwscl*10, foc:"orange", fow:"bold", foz:30 })
+
+       .ply(couplercurve, false, { ls:"#d60000", lw: mec.lwscl*10 })
+
+       .style({ ls:"black", lw: mec.lwscl*10, ld:[], lj:"round"})  // ohne runden lj "miter" Probleme bei A
+      // .ply([ A0.x, A0.y, A.x, A.y, B.x, B.y, K.x, K.y ], false)
+      // .ply([ B0.x, B0.y, B.x, B.y ], false)
+  /*     .rec(mec.K.x-922,mec.K.y-700, 1865,1200,{ls:"grey",ld:"@dashdot"})  // Kabine
+       .cir(mec.K.x,mec.K.y, 765.79, {ls:"#993366",ld:"@dashdot"}) // großer Kreis
+       .cir(mec.K.x,mec.K.y, 250, {ls:"#993366",ld:"@dashdot"}) // großer Kreis   */
+       .lin(A0.x, A0.y, A.x, A.y)
+       .lin(A.x, A.y, B.x, B.y)
+       .lin(B.x, B.y, K.x, K.y)
+       .lin(B0.x, B0.y, B.x, B.y)
+       
+       .arc(B.x, B.y, mec.lwscl*10, mec.theta, pi)
+
+      if (spring.checked) {
+          g.spring({x:F0.x, y:F0.y}, {x:K.x, y:K.y}, {h:mec.lwscl*25})
+           .beg({ls:"green", lw: mec.lwscl*5, ld:[mec.lwscl*20, mec.lwscl*5, mec.lwscl*5, mec.lwscl*5], foc:"green", foz:mec.lwscl*25})
+             .lin(F0.x - mec.lwscl*100, F0.y + maxspringlength + preload, F0.x + mec.lwscl*100, F0.y + maxspringlength + preload)
+                .label("Feder ungespannt", 1.3, 10)
+           .end()
+           .use("nodfix", {x:F0.x, y:F0.y, scl:2*mec.lwscl, lw: mec.lwscl, fs:"#dedede"})
+      }
+      g.end()  
+
+      g.beg({w:xi, foc:"orange", fow:"bold", foz:mec.lwscl*30, lw: mec.lwscl})
+      g.vec({x:mec.vecStart.x, y:mec.vecStart.y}, {x:K.x, y:K.y + mec.lwscl*6}, {lw: mec.lwscl*4, ls:"orange"})
+          .label("mg","beg","left")
+      // .avec({x:0, y:0}, mec.lwscl*35, pi/4, 3/2*pi, {lw: mec.lwscl*7, ls:"orange"})
+      //    .label("T","mid","right")
+       .arc(0, 0, mec.lwscl*35, pi/4, 3/2*pi, {lw: mec.lwscl*5, ls:"orange"})//.mark("arrow","end")
+       .label("T","mid","right")  
+       .use("arrow", { x:mec.lwscl*35*Math.cos(pi/4+3/2*pi), y:mec.lwscl*35*Math.sin(pi/4+3/2*pi) ,w:6*pi/40, scl:4*mec.lwscl, ls:"orange"} )
+
+       .style({ fs:"#dedede"})
+       
+       .cir(A.x, A.y, 6*mec.lwscl)
+       .cir(B.x, B.y, 6*mec.lwscl)
+       .cir(K.x, K.y, 6*mec.lwscl)
+
+       .style({ fs:"#dedede" })
+       .use("nodfix", { x:B0.x, y:B0.y, scl:2*mec.lwscl })
+       .use("nodfix", {scl:2*mec.lwscl})
+         .end()
+
+      if (mec.MyPlot.length>0) {
+        g3.del().clr()
+          .cartesian()
+          .chart(ch)
+          .cpy(ch.drawMarkersAt(g3,phi*180/pi))
+          .exe(ctx2);
+      }
+   };
+
+   function outputhub() {
+    /*
+     if ((maxrange-minrange)!=360) {
+       document.getElementById("hub").innerHTML = "Hub: " + hub.toFixed(2) + " mm";
+     } else {
+       document.getElementById("hub").innerHTML = "Hub: " + maxdisplacement.toFixed(2) + " mm";
+     };
+  */
+     document.getElementById("hub").innerHTML = "Hub: " + hub.toFixed(2) + " mm";
+   };
+
+
+   // aendert phi
+   function setPhi() {
+     phi = (output.value = range.value)*pi/180;
+     requestAnimationFrame(render);
+   };
+
+   function setXi() {
+     xi = xislider.value*pi/180;
+     xiout.innerHTML = xislider.value;
+     minmaxlength();
+     ccpath();
+     outputhub();
+     render();
+   }   
+
+   // aendert Gestell
+   function changeFrame() {
+     d = +(outputframe.value = frame.value);
+     d2 = Math.sqrt(d*d+e*e);
+     B0.x = (A0.x + d);
+   };
+
+
+   function setFrame() {
+     changeFrame();
+     minmaxlength();
+     ccpath();
+  /*   
+     if ((maxrange-minrange)!=360) {
+       document.getElementById("hub").innerHTML = "Hub: " + hub.toFixed(2) + " mm";
+     } else {
+       document.getElementById("hub").innerHTML = "Hub: " + maxdisplacement.toFixed(2) + " mm";
+     };
+*/
+     outputhub();
+     render();
+   };
+
+
+   // aendert Vorspannung
+   function setpreload() {
+     preload = +(outputpreload.value = prel.value);
+   };
+
+
+   // aendert Vorspannung
+   function setpreload() {
+     preload = +(outputpreload.value = prel.value);
+   };
+
+
+   function setPrel() {
+     setpreload();
+     ccpath();
+     render();
+   };
+
+   //########################################################
+   // Gliedlaengen
+   //########################################################
+   function seta() {
+     a = +(outputa.value = alen.value);
+     minmaxlength();
+     ccpath();
+     outputhub();
+     render();
+   };
+
+   function setb1() {
+     b1 = +(outputb1.value = b1len.value);
+     minmaxlength();
+     ccpath();
+     outputhub();
+     render();
+   };
+
+   function setb2() {
+     b2 = +(outputb2.value = b2len.value);
+     minmaxlength();
+     ccpath();
+     outputhub();
+     render();
+   };
+
+   function setc() {
+     c = +(outputc.value = clen.value);
+     minmaxlength();
+     ccpath();
+     outputhub();
+     render();
+   };
+
+   function sete() {
+     e = +(outpute.value = elen.value);
+     d2 = Math.sqrt(d*d+e*e),
+     B0.y = A0.y + e,
+     minmaxlength();
+     ccpath();
+     outputhub();
+     render();
+   };
+
+   function setAcc() {
+     a2 = +dacc.value;
+     inertia = m*a2;
+     setFrame();
+   }
+
+   function render() {
+     position();      // evaluiert Dynamik
+     world.exe(ctx);  // rendert Statik & Dynamik
+     AusgabeAntriebsmoment();  // aktualisiert HTML
+   };
+
+
+   // sucht die optimale Federvorspannung um Antriebsmoment zu minimieren
+   function optimize() {
+     if (confirm("Das kann lange dauern! \n\nTrotzdem weiter?") == true) {
+
+       var mindex = 0,
+           index_k = 0,
+           mintemptorq = 0,
+           mintemptorq_k = 0,
+           temptorq = [],
+           temptorq_k = [],
+           tempprel = [],
+           tempk = [],
+           tempk_k = [];
+
+
+       var t0 = performance.now();
+
+       kfak = 2*G*(maxspringlength - minspringlength)/(maxdisplacement*maxdisplacement + 2*maxdisplacement*preload);
+       var kmin = (kfak-5)<=0 ? 0.1 : (kfak-5);
+       var kmax = kfak + 4;
+    //   console.log("Eintritt: kfak: " + kfak + ", kmin: "  + kmin + ", kmax: " + kmax);
+
+       for (preload = +prel.min; preload<(+prel.max); preload+=20) {
+      // console.log("jede iteration: kmin: "  + kmin + "kmax: " + kmax);
+         tempk_k.length = 0;
+         temptorq_k.length = 0;
+
+         for (kfak=kmin; kfak<=kmax; kfak+=0.2 ) { //kfak+=0.2
+           ccpath();
+           temptorq_k.push(maxTorque);
+           tempk_k.push(kfak);
+         };
+
+         mintemptorq_k = Math.min.apply(this, temptorq_k);
+         index_k = temptorq_k.indexOf(mintemptorq_k);
+         tempk.push(tempk_k[index_k]);
+         temptorq.push(mintemptorq_k);
+         tempprel.push(preload);
+      };
+
+     } else { return; };
+
+     mintemptorq = Math.min.apply(this, temptorq); // Wert des kleinsten Antriebsmoments im Array  // Alternativ Math.min(...temptorq)
+     mindex = temptorq.indexOf(mintemptorq) // Index des kleinsten Antriebsmoments im Array
+     prel.value = tempprel[mindex];  // setze sliderposition, output und preload wird in anschließend aktualisiert
+     kfak = tempk[mindex];
+  //   console.log(tempk[mindex]);
+
+     setpreload();
+     ccpath();  // neu Zeichnen
+     render();
+
+     var t1 = performance.now();
+ //    console.log("optimize() took " + (+t1-t0)/1000 + "ms");
+
+     alert("Kleinstes maximales Antriebsmoment: " + mintemptorq.toFixed(2) + "Nm bei " + tempprel[mindex] + "mm Vorspannung ");
+   };
+
+
+   // berechnet flat-array der KKen-Punkte und zugehörige Antriebsmomente
+   function ccpath() {
+     var torque = 0;
+
+     couplercurve.length = 0;
+     maxTorque = 0;
+  //console.log(maxTorque);
+     for (phi=minrange; phi<maxrange; phi=phi+0.1) { // 0.1 Inkrement da sonst maxAngle für kurze Gestelle ungenau
+       phi = phi*pi/180;
+       torque = +Math.abs(mec.T);
+
+       if (torque > maxTorque) {  // vergleicht momentanes Antriebsmoment mit aktuellem Maximum
+         maxTorque = torque;
+         maxAngle = (phi*180/pi);  // Winkel in ° passend zu maxTorque
+       };
+
+       couplercurve.push( mec.K.x );  // Koppelkurve x Koordinate
+       couplercurve.push( mec.K.y );  // Koppelkurve y Koordinate
+       phi = phi*180/pi;  // zurück nach Grad zum Inkrementieren
+     };
+//console.log(maxTorque);
+     phi = minrange*pi/180;
+   };
+
+
+   // berechnet die maximale und minimale Federlänge sowie den Federweg (minrange < pi !!!)
+   function minmaxlength() {
+       var maxdisp;
+
+     //  phi = (maxrange*pi/180>=pi) ? pi : maxrange*pi/180;
+     if (minrange>pi) {
+       phi = minrange*pi/180;
+     } else {
+       phi = (maxrange*pi/180>=pi) ? pi : maxrange*pi/180;
+     }
+  //   console.log("phimin: "+phi);
+       minspringlength = Math.sqrt(mec.F0KF0K);
+       y2 = mec.K.y;
+
+    //   phi = minrange*pi/180;  // setzt gleichzeitig zurück auf Anzeigewert
+       phi = (minrange>pi && maxrange>=2*pi) ? 2*pi/180 : minrange*pi/180;
+       maxspringlength = Math.sqrt(mec.F0KF0K);
+       y1 = mec.K.y;
+       (y2>y1) ? hub = (y2 - y1)*Math.cos(xi) : hub = (y1 - y2)*Math.cos(xi) ;
+       
+       phi = minrange*pi/180;
+       maxdisplacement = maxspringlength - minspringlength;  // Gesamtfederweg
+       maxdisp = Math.trunc(maxdisplacement);  // nur 1x trunc notwendig
+       prel.max = 0.4*maxdisp;  // setzt range vom prel-slider normal maxdisp oder 0.4*maxdisp
+       prel.min = 0.05*maxdisp; // normal -maxdisp oder 0.05*maxdisp
+   };
+
+
+   function AusgabeAntriebsmoment() {
+     document.getElementById("T").innerHTML = "Benötigtes Antriebsmoment bei aktueller Position: " + Math.abs(mec.T).toFixed(2) + " Nm"; // Betrag von T auf 2 Nachkommastellen gerundet
+     document.getElementById("S3").innerHTML = "F<sub>Schwinge</sub> = " + mec.S3.toFixed(2) + " N (neg. = Druckstab)";
+     document.getElementById("Ax").innerHTML = "A<sub>0x</sub> = A<sub>x</sub> = " + (mec.FA.x).toFixed(2) + " N";
+     document.getElementById("Ay").innerHTML = "A<sub>0y</sub> = A<sub>y</sub> = " + (mec.FA.y).toFixed(2) + " N";
+     document.getElementById("Ares").innerHTML = "A<sub>res</sub> = " + Math.sqrt(mec.FA.x*mec.FA.x + mec.FA.y*mec.FA.y).toFixed(2) + " N";
+     document.getElementById("Tmax").innerHTML = "Maximales Antriebsmoment: " + maxTorque.toFixed(2) + " Nm bei &phi; = " + (360-maxAngle).toFixed(2) + "° und " + maxAngle.toFixed(2) + "°" ;
+     if (spring.checked) {
+        document.getElementById("k").innerHTML = "Federkonstante: " + mec.k.toFixed(2) + " N/mm";
+		    document.getElementById("s0").innerHTML = "s0: " + (maxspringlength + preload).toFixed(2) + " mm";
+		    document.getElementById("s1").innerHTML = "s1: " + maxspringlength.toFixed(2) + " mm";
+     } else {
+        document.getElementById("k").innerHTML = document.getElementById("s0").innerHTML = document.getElementById("s1").innerHTML = "";
+     }
+    N1.innerHTML = "N<sup>I</sup> = " + mec.N1.toFixed(2) + " N";
+    Q1.innerHTML = "Q<sup>I</sup> = " + mec.Q1.toFixed(2) + " N";
+    N2.innerHTML = "N<sup>II</sup> = " + mec.N2.toFixed(2) + " N";
+    Q2.innerHTML = "Q<sup>II</sup> = " + mec.Q2.toFixed(2) + " N";
+   };
+
+
+   // schaltet Status von Button und prel-slider um
+   function activateSpring() {
+     if (button.disabled) {
+         button.disabled = prel.disabled = false;
+     } else {
+         button.disabled = prel.disabled = true;
+     }
+     minmaxlength();
+     setPrel();
+   };
+
+
+   // evaluiert Biegemomente Schnittgroessen
+   function Mmax() {
+     if (confirm("Maximales Biegemoment suchen. \n\nWeiter?") == true) {
+
+       var maxIndex = 0,
+           maxTempM = 0,
+           sectionArr = [],
+           tempMAbs = [],
+           section = 0,
+           maxM = 0, 
+           mBeg = mMid = mEnd = 0;
+        
+       mec.tempM = [];
+
+
+       var t0 = performance.now();
+       
+
+       for (phi=minrange; phi<maxrange; phi=phi+0.1) {
+         phi = phi*pi/180; // zu Radiant
+
+         mBeg = Math.abs(mec.M1(0));
+         mMid = Math.abs(mec.M1(b1));
+         mEnd = Math.abs(mec.M2(b1+b2));
+//console.log(mBeg);
+         mec.tempPhi.push(phi);
+
+         if (mMid > mBeg && mMid > mEnd) { // hier muss irgendwie der Bereich mit übertragen werden weil wir später wegen Beträgen das Mmax neu berechnen müssen und wissen müssen ob es in Bereich 1 oder 2 liegt
+           mec.tempM.push( mec.M1(b1) );             // section 0 = mBeg, section 1 = mMid, section 2 = mEnd
+           sectionArr.push(2);
+         } else if ( mEnd > mMid && mEnd > mBeg) {
+           mec.tempM.push( mec.M2(b1+b2) );
+           sectionArr.push(3);
+         } else {
+           mec.tempM.push( mec.M1(0) );
+           sectionArr.push(1);
+         }  
+         phi = phi*180/pi; // zu Radiant 
+       }
+     } else { return; };
+   // console.log(...mec.tempM);
+
+      // kopiere Array mit Absolutwerten für Max Suche
+     for (var i=0; i < mec.tempM.length-1; i++) {
+       tempMAbs.push(Math.abs(mec.tempM[i]))  
+     }; 
+
+     maxTempM = Math.max.apply(this, tempMAbs); // Wert des kleinsten Antriebsmoments im Array  // Alternativ Math.min(...temptorq)
+     maxIndex = tempMAbs.indexOf(maxTempM) // Index des kleinsten Antriebsmoments im Array
+     section = sectionArr[maxIndex];
+   // console.log("section: " + section);
+     phi = mec.tempPhi[maxIndex];  // setze sliderposition, output und preload wird in anschließend aktualisiert
+   // console.log("phi: "+phi + "mMax: "+ mec.M1(b1));
+     if (section === 1) {
+       maxM = mec.M1(0);
+     } else if (section === 2) {
+       maxM = mec.M1(b1);
+     } else if (section === 3) {
+       maxM = mec.M2(b1+b2);
+     }
+   // console.log("maxM1: "+maxM);
+     render();
+     spliceMy();
+     plotMy();
+
+     var t1 = performance.now();
+   // console.log("optimize() took " + (+t1-t0)/1000 + "ms");
+   // console.log("maxM2: "+maxM);
+     alert("Größtes maximales Biegemoment: " + maxM.toFixed(2) + "Nm an Stelle " + section + " bei \u03C6: " + (phi*180/pi).toFixed(2) + "° ");
+   }
+
+
+   function spliceMy() {
+     mec.MyPlot = [];
+     for (var i=0; i < mec.tempM.length-1; i++) {
+       mec.MyPlot.push(mec.tempPhi[i]*180/pi,mec.tempM[i]);
+     }
+   }
+
+
+   function plotMy() {
+     ch = g2.Chart.create({ x:35, y:35, b:600, h:300,
+                    title:{text:"Biegemoment"},
+                    ymin:Math.min(...mec.MyPlot), ymax:Math.max(...mec.MyPlot), // notfalls auskommentieren
+                    funcs:[
+                      { data:mec.MyPlot, 
+                      fill:true }
+                    ],
+                    xaxis: {
+                       title:"φ [°]",
+                       grid:true
+                     },
+                     yaxis: {
+                       title:"My [Nm]",
+                       grid:true
+                     }
+            });
+     render();      
+   }
+
+
+   // Eventlistener
+   range.addEventListener("input",setPhi);
+   frame.addEventListener("change",setFrame);
+   prel.addEventListener("change",setPrel);
+   spring.addEventListener("change",activateSpring);
+   button.addEventListener("click",optimize);
+   button2.addEventListener("click",Mmax);
+  // button3.addEventListener("click",plotMy);
+   ctx.canvas.addEventListener("mousemove", onmove);  // listen to pan event ..
+   ctx.canvas.addEventListener("wheel", onwheel);     // listen to zoom event ..
+   xislider.addEventListener("input",setXi);
+   dynamic.addEventListener("change",setFrame);
+   dacc.addEventListener("change",setAcc);
+
+   alen.addEventListener("input",seta);
+   b1len.addEventListener("input",setb1);
+   b2len.addEventListener("input",setb2);
+   clen.addEventListener("input",setc);
+   elen.addEventListener("input",sete);
+
+   // Initialisierung
+   
+   document.getElementById("output").innerHTML = minrange;
+   document.getElementById("mg").innerHTML = "Masse: " + m + " kg";
+   
+   
+   $().ready(function() {
+     minrange = +range.min;
+     maxrange = +range.max;
+     minmaxlength();  // für refresh ohne Cacheerneuerung notwendig
+     ccpath();
+     outputhub();
+     render();
+   });  
+
+   </script>
+</body>
+</html>
