@@ -155,10 +155,10 @@ var cnv = document.getElementById('c'),
 
     panel = QuickSettings.create(10, 10, "Steuerung")
              .addImage("","http://www.fh-dortmund.de/images/logo.svg")
-             .addProgressBar("Fortschritt:", 6, mec.step, "numbers")
-             .addButton("Schritt weiter ▶", function(value) { if(mec.step<6) {mec.step+=1; dirty = true; panel.setValue("Fortschritt:", mec.step);}}) // ▶
-             .addButton("Schritt zurück ◀", function(value) { if(mec.step>0) {mec.step-=1; dirty = true; panel.setValue("Fortschritt:", mec.step);}}) // ◀
-             .addRange("φ:", 0, 360, 60, 1, function(value) { mec.phi = value / 180 * pi; dirty = true;})
+             .addProgressBar("Fortschritt", 6, mec.step, "numbers")
+             .addButton("Schritt weiter ▶", function(value) { if(mec.step<6) {mec.step+=1; dirty = true; panel.setValue("Fortschritt", mec.step);}}) // ▶
+             .addButton("Schritt zurück ◀", function(value) { if(mec.step>0) {mec.step-=1; dirty = true; panel.setValue("Fortschritt", mec.step);}}) // ◀
+             .addRange("φ", 0, 360, 60, 1, function(value) { mec.phi = value / 180 * pi; dirty = true;})
              .addNumber("a", 0, 300, 45, 1, function(value) { mec.a = value; dirty = true;})
              .addNumber("b", 0, 300, 150, 1, function(value) { mec.b = value; dirty = true;})
              .addNumber("c", 0, 300, 100, 1, function(value) { mec.c = value; dirty = true;})
