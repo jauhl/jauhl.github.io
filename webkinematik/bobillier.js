@@ -34,6 +34,10 @@ function render() {
     requestAnimationFrame(render);
 }
 
+function updateOutput() {
+    panel2.setValue("aktueller Schritt:", steps[mec.step]);
+}
+
 var cnv = document.getElementById('c'),
     ctx = cnv.getContext('2d'),
     width = cnv.width = window.innerWidth,
@@ -153,17 +157,28 @@ var cnv = document.getElementById('c'),
 
     dirty = true,
 
+    steps = {
+        0: "Bekannt ist die Lage zweier Punkte (A, B) eines Gliedes, sowie deren Krümmungsmittelpunkte A\u2080 und B\u2080",
+        1: "Ermittlung des Momentanpols P im Schnittpunkt der Geraden AA\u2080 und BB\u2080.",
+        2: "Bestimmung des Relativpols I zwischen Kurbel und Schwinge im Schnittpunkt der Geraden AB und A\u2080B\u2080"
+        // weitere Schritte
+    },
+
     panel = QuickSettings.create(10, 10, "Steuerung")
              .addImage("","http://www.fh-dortmund.de/images/logo.svg")
              .addProgressBar("Fortschritt", 6, mec.step, "numbers")
-             .addButton("Schritt weiter ▶", function(value) { if(mec.step<6) {mec.step+=1; dirty = true; panel.setValue("Fortschritt", mec.step);}}) // ▶
-             .addButton("Schritt zurück ◀", function(value) { if(mec.step>0) {mec.step-=1; dirty = true; panel.setValue("Fortschritt", mec.step);}}) // ◀
+             .addButton("Schritt weiter ▶", function(value) { if(mec.step<6) {mec.step+=1; dirty = true; panel.setValue("Fortschritt", mec.step);} updateOutput();}) // ▶
+             .addButton("Schritt zurück ◀", function(value) { if(mec.step>0) {mec.step-=1; dirty = true; panel.setValue("Fortschritt", mec.step);} updateOutput();}) // ◀
              .addRange("φ", 0, 360, 60, 1, function(value) { mec.phi = value / 180 * pi; dirty = true;})
              .addNumber("a", 0, 300, 45, 1, function(value) { mec.a = value; dirty = true;})
              .addNumber("b", 0, 300, 150, 1, function(value) { mec.b = value; dirty = true;})
              .addNumber("c", 0, 300, 100, 1, function(value) { mec.c = value; dirty = true;})
              .addNumber("d (rein horizontal)", 0, 300, 200, 1, function(value) { mec.d = value; dirty = true;})
-             .addNumber("e (rein vertikal)", -100, 100, 0, 1, function(value) { mec.e = value; dirty = true;})
+             .addNumber("e (rein vertikal)", -100, 100, 0, 1, function(value) { mec.e = value; dirty = true;}),
+
+    panel2 = QuickSettings.create(width - 310, 10, "Output")
+             .addTextArea("aktueller Schritt:")
+             .setWidth(300)            
 ;
 
 /*
@@ -171,6 +186,7 @@ var cnv = document.getElementById('c'),
  */
 
 // Animation starten
+updateOutput();
 render();
 
 window.onload = function() {
