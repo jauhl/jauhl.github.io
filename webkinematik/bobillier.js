@@ -7,24 +7,24 @@ function position() {
      // Schritt 1
      if(mec.step >= 1) {
         g.use("pol",mec.P).label("P","n")
-         .lin(mec.A0.x - 2*width*mec.ephi.x, mec.A0.y - 2*width*mec.ephi.y, mec.A0.x + 2*width*mec.ephi.x, mec.A0.y + 2*width*mec.ephi.y, {ld:"@dashdot", ls:"rgba(255, 255, 255, 0.7)"})
-         .lin(mec.B0.x - 2*width*mec.epsi.x, mec.B0.y - 2*width*mec.epsi.y, mec.B0.x + 2*width*mec.epsi.x, mec.B0.y + 2*width*mec.epsi.y, {ld:"@dashdot", ls:"rgba(255, 255, 255, 0.7)"})         
+         .lin(mec.A0.x - 2*width*mec.ephi.x, mec.A0.y - 2*width*mec.ephi.y, mec.A0.x + 2*width*mec.ephi.x, mec.A0.y + 2*width*mec.ephi.y, {ld:"@dashdot", ls:"rgba(255, 255, 255, 0.5)"})
+         .lin(mec.B0.x - 2*width*mec.epsi.x, mec.B0.y - 2*width*mec.epsi.y, mec.B0.x + 2*width*mec.epsi.x, mec.B0.y + 2*width*mec.epsi.y, {ld:"@dashdot", ls:"rgba(255, 255, 255, 0.5)"})         
      }
 
      // Schritt 2
      if(mec.step >= 2) {
         g.use("nod",mec.I).label("I","se")
-         .lin(mec.A.x - 2*width*mec.etheta.x, mec.A.y - 2*width*mec.etheta.y, mec.A.x + 2*width*mec.etheta.x, mec.A.y + 2*width*mec.etheta.y, {ld:"@dash", ls:"rgba(255, 255, 255, 0.7)"})
+         .lin(mec.A.x - 2*width*mec.etheta.x, mec.A.y - 2*width*mec.etheta.y, mec.A.x + 2*width*mec.etheta.x, mec.A.y + 2*width*mec.etheta.y, {ld:"@dash", ls:"rgba(255, 255, 255, 0.5)"})
         if (mec.I.x < mec.A0.x || mec.I.x > mec.B0.x) {
-            g.lin(mec.B0.x, mec.B0.y, mec.I.x, mec.I.y, {ld:"@dash", ls:"rgba(255, 255, 255, 0.7)"})  
+            g.lin(mec.B0.x, mec.B0.y, mec.I.x, mec.I.y, {ld:"@dash", ls:"rgba(255, 255, 255, 0.5)"})  
         } else {
-            g.lin(mec.B0.x, mec.B0.y, mec.A0.x, mec.A0.y, {ld:"@dash", ls:"rgba(255, 255, 255, 0.7)"}) 
+            g.lin(mec.B0.x, mec.B0.y, mec.A0.x, mec.A0.y, {ld:"@dash", ls:"rgba(255, 255, 255, 0.5)"}) 
         }
      }
 
      // Schritt 3
      if(mec.step >= 3) {
-        g.lin(mec.I.x, mec.I.y, mec.P.x, mec.P.y, {ls:"rgba(255, 255, 255, 0.7)"}).mark("tick",0.49).mark("tick",0.51)    
+        g.lin(mec.I.x, mec.I.y, mec.P.x, mec.P.y, {ls:"rgba(255, 255, 255, 0.6)"}).mark("tick",0.49).mark("tick",0.51)    
      }
 
      // Schritt 4
@@ -36,8 +36,8 @@ function position() {
      // Schritt 6
      if(mec.step >= 6) {
         g.use("pol",mec.W).label("W","se")
-         .lin(mec.Aw.x, mec.Aw.y, mec.W.x, mec.W.y, {ld:"@dot", ls:"rgba(255, 255, 255, 0.8)"})
-         .lin(mec.Bw.x, mec.Bw.y, mec.W.x, mec.W.y, {ld:"@dot", ls:"rgba(255, 255, 255, 0.8)"})
+         .lin(mec.Aw.x, mec.Aw.y, mec.W.x, mec.W.y, {ld:"@dot", ls:"rgba(255, 255, 255, 0.9)"})
+         .lin(mec.Bw.x, mec.Bw.y, mec.W.x, mec.W.y, {ld:"@dot", ls:"rgba(255, 255, 255, 0.9)"})
          .beg({x: mec.Aw.x, y: mec.Aw.y, w:pi + Math.atan2(mec.e_A0A.y, mec.e_A0A.x)})
             .rec(0, 0, -8, 8, {lw:2, ls:"rgba(126, 126, 118, 0.9)", fs:"rgba(255, 255, 255, 0.6)"})
          .end()
