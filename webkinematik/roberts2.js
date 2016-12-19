@@ -407,8 +407,8 @@ var cnv = document.getElementById('c'),
              .addNumber("c", 0, 500, mec.c, "any", function(value) { mec.c = value; dirty = true; gtria();})  // "c", 0, 300, 100, 1
              .addNumber("d (rein horizontal)", 0, 500, mec.d, 1, function(value) { mec.d = value; dirty = true; gtria();})
              .addNumber("e (rein vertikal)", -100, 100, mec.e, 1, function(value) { mec.e = value; dirty = true; gtria();})
-             .addNumber("Posiiton Lot Koppeldreieck", 0, 500, mec.j, "any", function(value) { mec.j = value; dirty = true; gtria();})
-             .addNumber("Höhe Koppeldreieck", 0, 500, mec.k, "any", function(value) { mec.k = value; dirty = true; gtria();})
+             .addNumber("Positon Lot Koppeldreieck", -500, 500, mec.j, "any", function(value) { mec.j = value; dirty = true; gtria();})
+             .addNumber("Höhe Koppeldreieck", -500, 500, mec.k, "any", function(value) { mec.k = value; dirty = true; gtria();})
             //  .saveInLocalStorage("roberts")
             //  .addButton("reset", function() {panel.setValuesFromJSON(defaultValues);})
     ,
