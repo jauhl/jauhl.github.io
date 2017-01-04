@@ -1,0 +1,405 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Dreiwinkelzuordnung</title>    
+    <style>
+        html, body {
+            margin: 0px;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>  
+</head>
+
+<body>       
+    <canvas id="c"></canvas>
+    <canvas id="c2"></canvas>
+
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/v2/master/v2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/quicksettings/latest/quicksettings.min.js"></script>      
+ <!-- 
+    <script src="./libs/g2.min.js"></script>
+    <script src="./libs/g2.mec.min.js"></script>
+    <script src="./libs/v2.min.js"></script>
+    <script src="./libs/quicksettings.min.js"></script>
+-->
+    <script>
+    
+function position() {
+    g.del().style({foc:"white"})
+     
+    if (evaluated) {
+        g.bar2(mec.A0,mec.A)
+         .bar2(mec.A,mec.B)
+         .bar2(mec.B0,mec.B)
+
+         .use("nod",mec.A).label("A","nw")
+         .use("nod",mec.B).label("B","ne")
+    } 
+    
+    g.use("nodfix",mec.B0).label("B0","se")
+}
+
+function angles() {
+    // if (init) {
+        var xOff = (width - 400)/2,
+            yOff = (height - 360)/2;
+
+        angl.del().clr().cartesian().style({ls:"papayawhip", ld:"@dashdot", foc:"papayawhip"})         
+
+        for (var i = 0; i < 3; i++) {
+           angl.lin(xOff + mec.A0.x, yOff + mec.A0.y, xOff + mec.d2*Math.cos(mec.phi_i[i]), yOff + mec.d2*Math.sin(mec.phi_i[i])).label(`\u03C6${i+1}`,`end`,`right`)
+               .lin(xOff + mec.B0.x, yOff + mec.B0.y, xOff + mec.B0.x + mec.d2*Math.cos(mec.psi_i[i]), yOff + mec.B0.y + mec.d2*Math.sin(mec.psi_i[i])).label(`\u03C8${i+1}`,`end`,`right`)  
+           console.log(`phi${i+1} = ${mec.phi_i[i]*180/pi}, psi${i+1} = ${mec.psi_i[i]*180/pi}`)
+        }
+
+        angl.exe(ctx2)
+    // }
+}   
+
+function render() {
+    if (dirty) {
+        position();
+        world.exe(ctx);
+        dirty = false;
+    }
+    requestAnimationFrame(render);
+}
+
+// function updateOutput() {
+//     panel2.setValue("aktueller Schritt:", steps[mec.step]);
+// }
+
+function norm(value, min, max) {
+    return (value - min)/(max - min);
+}
+
+// cross product; takes objects with at least 2 dimensions and returns a 3d object
+function cross(a,b) {
+    var az = (a.z != 0) ? (a.z || 1) : 0,
+        bz = (b.z != 0) ? (b.z || 1) : 0;
+
+    return {x: a.y*bz - az*b.y , y: az*b.x - a.x*bz , z: a.x*b.y  -  a.y*b.x};
+}
+
+function evaluate() {
+    if (mec.e != 0) changePsis();
+
+    /* mec.test (Matblab gesolved) mit Goessner Gliedlängen sheint am richtigsten und stimmen mit den Hagedorn Ergebnissen überein
+     *
+     * Die Hagedorn Formeln liefern jedoch NICHT seine Ergebnisse... Pascal Programm scheint sehr schlampig geschrieben worden zu sein
+     * außerdem K2 vorzeichen hier oder bei Matlab version falsch...
+     *
+     * Gossner Formeln schein ein Vorzeichenfehler nech der Reduktion auf 2 Gleichungen durch Subtraktion zu sein 
+     * zu Matlab sind K1 und K2 vertauscht, und K3 falsch
+     *
+     *
+     */
+
+    // Goessner
+    if (method == "Matlab" || method == "Goessner") {
+        if (method == "Matlab") mec.KML;  // Matlab
+        if (method == "Goessner") mec.KG; // Buch
+        mec.a = mec.d2/mec.K1;
+        mec.c = mec.d2/mec.K2;
+        mec.b = Math.sqrt(mec.a*mec.a + mec.c*mec.c + mec.d2*mec.d2 - 2*mec.a*mec.c*mec.K3);
+    }
+    
+    
+    // Hagedorn
+    if (method == "Hagedorn") {
+        mec.KH;
+        mec.a = mec.d2/mec.K1;
+        mec.c = mec.d2/mec.K2;
+        mec.b = Math.sqrt(mec.a*mec.a + mec.c*mec.c + mec.d2*mec.d2 - 2*mec.a*mec.c*mec.K3); // - 2*mec.a+mec.c*mec.K3 !sic
+    }
+
+    console.log("a = " + mec.a + ",   b = " + mec.b + ",   c = " + mec.c  );
+
+    panel.setRangeParameters("φ", mec.phi_i[0]*180/pi, mec.phi_i[2]*180/pi, 1);
+
+    //console.log("phi1: " + Math.round(mec.phi_i[0]*180/pi));
+    panel.setValue("φ", Math.round(mec.phi_i[0]*180/pi)); // range wird komischerweise trotz round rot
+
+    evaluated = true;
+}
+
+function changePsis() {
+    for (var i = 0; i < 3; i++) {
+        console.log(`vorher: mec.psi_[${i+1}] = ${mec.psi_i[i]}, mec.alpha = ${mec.alpha} `);
+        mec.psi_i[i] -= mec.alpha; 
+        console.log(`nacher: mec.psi_[${i+1}] = ${mec.psi_i[i]}`);
+    }
+}
+
+var cnv = document.getElementById('c'),
+    ctx = cnv.getContext('2d'),
+    cnv2 = document.getElementById('c2'),
+    ctx2 = cnv2.getContext('2d'),
+    width = cnv.width = cnv2.width = window.innerWidth,
+    height = cnv.height = cnv2.height = window.innerHeight,
+
+    pi = Math.PI,
+
+    mec = {
+        phi:0,
+        phi_i: [40/180*pi,90/180*pi,130/180*pi], // predefined angles
+        psi_i: [125/180*pi,134/180*pi,150/180*pi], // predefined angles
+        a:100,
+        b:200,
+        c:360,
+        d:300,
+        e:0,
+
+        step: 0,
+        largeNum: 999999999,
+
+        //######################################################################
+        //#            Loesung
+        //######################################################################
+
+        K1: 0, K2: 0, K3: 0,
+
+        //######################################################################
+        //#            Goessner
+        //######################################################################
+        get KG() {
+            var phi1 = mec.phi_i[0], phi2 = mec.phi_i[1], phi3 = mec.phi_i[2],
+                psi1 = mec.psi_i[0], psi2 = mec.psi_i[1], psi3 = mec.psi_i[2],
+
+                num1 = (Math.cos(psi1) - Math.cos(psi2))*(Math.cos(psi1 - phi1) - Math.cos(psi3 - phi3)) - (Math.cos(psi1) - Math.cos(psi3))*(Math.cos(psi1 - phi1) - Math.cos(psi2 - phi2)),
+                num2 = (Math.cos(phi1) - Math.cos(phi2))*(Math.cos(psi1 - phi1) - Math.cos(psi3 - phi3)) - (Math.cos(phi1) - Math.cos(phi3))*(Math.cos(psi1 - phi1) - Math.cos(psi2 - phi2)),
+                denom = (Math.cos(psi1) - Math.cos(psi2))*(Math.cos(phi1) - Math.cos(phi3)) - (Math.cos(phi1) - Math.cos(phi2))*(Math.cos(psi1) - Math.cos(psi3));
+
+            mec.K1 = num1/denom;
+            mec.K2 = num2/denom;
+            mec.K3 = Math.cos(mec.phi_i[0] - mec.phi_i[0]) - mec.K1*Math.cos(mec.phi_i[0]) + mec.K2*Math.cos(mec.phi_i[0])
+            
+            console.log("K1 = " + mec.K1);
+            console.log("K2 = " + mec.K2);
+            console.log("K3 = " +  mec.K3);
+
+            return ;
+        },
+
+        //######################################################################
+        //#            Hagedorn
+        //######################################################################
+        get KH() {
+            var phi1 = mec.phi_i[0], phi2 = mec.phi_i[1], phi3 = mec.phi_i[2],
+                psi1 = mec.psi_i[0], psi2 = mec.psi_i[1], psi3 = mec.psi_i[2],
+
+                a1 = Math.cos(psi1) - Math.cos(psi2),
+                a2 = Math.cos(phi1) - Math.cos(phi2),
+                a3 = Math.cos(psi1 - phi1) - Math.cos(psi2 - phi2),
+                a4 = Math.cos(psi1) - Math.cos(psi3),
+                a5 = Math.cos(phi1) - Math.cos(phi3),
+                a6 = Math.cos(psi1 - phi1) - Math.cos(psi3 - phi3);
+
+                console.log("a1 = " + a1); console.log("a2 = " + a2); console.log("a3 = " + a3);
+                console.log("a4 = " + a4); console.log("a5 = " + a5); console.log("a6 = " + a6);
+
+                mec.K1 = (a2*a6 - a3*a5)/(a2*a4 - a1*a5);
+                console.log("K1 = " + mec.K1);
+
+                mec.K2 = (a3*a4 - a1*a6)/(a2*a4 - a1*a5); // *(-1) dann stimmen Werte mit Matlab überein
+                console.log("K2 = " + mec.K2);
+
+                mec.K3 = Math.cos(psi1 - phi1) - mec.K1*Math.cos(psi1) + mec.K2*Math.cos(phi1);
+                console.log("K3 = " + mec.K3);
+
+                return;
+        },
+
+        //######################################################################
+        //#            Matlab
+        //######################################################################
+        get KML() {
+            var phi1 = mec.phi_i[0], phi2 = mec.phi_i[1], phi3 = mec.phi_i[2],
+                psi1 = mec.psi_i[0], psi2 = mec.psi_i[1], psi3 = mec.psi_i[2],
+                // psi1 = (mec.e=0)?mec.psi_i[0]:mec.psi_i[0]-mec.alpha, psi2 = (mec.e=0)?mec.psi_i[1]:mec.psi_i[1]-mec.alpha, psi3 = (mec.e=0)?mec.psi_i[2]:mec.psi_i[2]-mec.alpha,
+                denominator = Math.cos(phi1)*Math.cos(psi2) - Math.cos(phi2)*Math.cos(psi1) - Math.cos(phi1)*Math.cos(psi3) + Math.cos(phi3)*Math.cos(psi1) + Math.cos(phi2)*Math.cos(psi3) - Math.cos(phi3)*Math.cos(psi2);
+
+                // vorgerechnet dann Matlab (stimmt mit unten überein)
+                // mec.K1 = -(Math.cos(phi1 - psi1)*Math.cos(phi2) - Math.cos(phi1 - psi1)*Math.cos(phi3) - Math.cos(phi2 - psi2)*Math.cos(phi1) + Math.cos(phi2 - psi2)*Math.cos(phi3) + Math.cos(phi3 - psi3)*Math.cos(phi1) 
+                //      - Math.cos(phi3 - psi3)*Math.cos(phi2))/(c1),
+
+                // mec.K2 = -(Math.cos(phi1 - psi1)*Math.cos(psi2) - Math.cos(phi1 - psi1)*Math.cos(psi3) - Math.cos(phi2 - psi2)*Math.cos(psi1) + Math.cos(phi2 - psi2)*Math.cos(psi3) + Math.cos(phi3 - psi3)*Math.cos(psi1) 
+                //      - Math.cos(phi3 - psi3)*Math.cos(psi2))/(c1),
+
+                // mec.K3 = (Math.cos(phi1 - psi1)*Math.cos(phi2)*Math.cos(psi3) - Math.cos(phi1 - psi1)*Math.cos(phi3)*Math.cos(psi2) - Math.cos(phi2 - psi2)*Math.cos(phi1)*Math.cos(psi3) + Math.cos(phi2 - psi2)*Math.cos(phi3)*
+                //      Math.cos(psi1) + Math.cos(phi3 - psi3)*Math.cos(phi1)*Math.cos(psi2) - Math.cos(phi3 - psi3)*Math.cos(phi2)*Math.cos(psi1))/(Math.cos(phi1)*Math.cos(psi2) - Math.cos(phi2)*Math.cos(psi1) 
+                //      - Math.cos(phi1)*Math.cos(psi3) + Math.cos(phi3)*Math.cos(psi1) + Math.cos(phi2)*Math.cos(psi3) - Math.cos(phi3)*Math.cos(psi2)),
+
+                // Matrizenlösung (rein Matlab)
+                mec.K1 = -(Math.cos(phi1 - psi1)*Math.cos(phi2) - Math.cos(phi1 - psi1)*Math.cos(phi3) - Math.cos(phi2 - psi2)*Math.cos(phi1) + Math.cos(phi2 - psi2)*Math.cos(phi3) + Math.cos(phi3 - psi3)*Math.cos(phi1) 
+                         - Math.cos(phi3 - psi3)*Math.cos(phi2))/denominator,  
+
+                mec.K2 = -(Math.cos(phi1 - psi1)*Math.cos(psi2) - Math.cos(phi1 - psi1)*Math.cos(psi3) - Math.cos(phi2 - psi2)*Math.cos(psi1) + Math.cos(phi2 - psi2)*Math.cos(psi3) + Math.cos(phi3 - psi3)*Math.cos(psi1) 
+                         - Math.cos(phi3 - psi3)*Math.cos(psi2))/denominator,
+
+                mec.K3 = (Math.cos(phi1 - psi1)*Math.cos(phi2)*Math.cos(psi3) - Math.cos(phi1 - psi1)*Math.cos(phi3)*Math.cos(psi2) - Math.cos(phi2 - psi2)*Math.cos(phi1)*Math.cos(psi3) + Math.cos(phi2 - psi2)*Math.cos(phi3)*
+                         Math.cos(psi1) + Math.cos(phi3 - psi3)*Math.cos(phi1)*Math.cos(psi2) - Math.cos(phi3 - psi3)*Math.cos(phi2)*Math.cos(psi1))/denominator;
+            
+            console.log("K1 = " + mec.K1 + "\nK2 = " + mec.K2 + "\nK3 = " + mec.K3);
+            return; 
+        },
+
+
+        //######################################################################
+        //#            Kinematik
+        //######################################################################
+
+        get ephi() {
+            return {x: Math.cos(this.phi), y: Math.sin(this.phi)};
+        },
+
+        get g() {
+            return {x: this.d2*this.ealpha.x - this.a*this.ephi.x, y:  this.d2*this.ealpha.y - this.a*this.ephi.y};
+        },
+
+        get gg() {
+            return this.a*this.a + this.d2*this.d2 - 2*this.a*this.d2*Math.cos(this.alpha - this.phi);
+        },
+
+        get d2() {
+            return Math.sqrt(this.d*this.d+this.e*this.e);
+        },
+
+        get alpha() {
+            return Math.atan(this.e/this.d);
+        },
+
+        get ealpha() {
+            return {x: Math.cos(this.alpha), y: Math.sin(this.alpha)};
+        },
+
+        get theta() {
+            var gg = this.gg, bb_gg = (this.b*this.b)/gg, g = this.g,
+                lambda = 0.5 * (bb_gg - this.c*this.c/gg + 1),
+                mue = Math.sqrt(bb_gg - lambda * lambda);
+            return Math.atan2((1/this.b) * (lambda*g.y + mue*g.x), (1/this.b)*(lambda*g.x - mue*g.y))
+        },
+
+        get etheta() {
+            return {x: Math.cos(this.theta), y: Math.sin(this.theta)};
+        },
+
+        get psi() {
+            var etheta = this.etheta;
+            return Math.atan2((1/this.c)*(this.b*etheta.y - this.g.y), (1/this.c)*(this.b*etheta.x - this.g.x))
+        },
+
+        get epsi() {
+            return {x: Math.cos(this.psi), y: Math.sin(this.psi)};
+        },
+
+        //######################################################################
+        //#            Punkte
+        //######################################################################
+
+        A0: {x:0, y:0},
+
+        get B0() {
+            return {x: this.A0.x + this.d, y: this.A0.y + this.e};
+        },
+
+        get A() {
+            return {x: this.A0.x + this.a*this.ephi.x, y: this.A0.y + this.a*this.ephi.y};
+        },
+
+        get B() {
+            return {x: this.B0.x + this.c*this.epsi.x, y: this.B0.y + this.c*this.epsi.y};
+        }
+    },
+
+    g = g2(),
+    angl = g2(),
+    pol = g2().cir(0,0,6,{ls:"@nodcolor",fs:"rgba(255, 153, 0, 0.8)",lwnosc:true})
+               .cir(0,0,2.5,{ls:"@nodcolor",fs:"@nodcolor"});
+    pol2 = g2().cir(0,0,6,{ls:"@nodcolor",fs:"rgba(129, 165, 148, 1)",lwnosc:true})
+               .cir(0,0,2.5,{ls:"@nodcolor",fs:"@nodcolor"});
+    world = g2().clr().cartesian().style({foc:"white"})
+                .rec(-width,-height,2*width,2*height,{ls:"rgba(52, 76, 107, 1)",fs:"rgba(52, 76, 107, 1)"})  // blueprint blue rgba(52, 76, 107, 1)
+                .grid("rgba(255, 255, 255, 0.1)",100)
+                .grid("rgba(255, 255, 255, 0.1)",20)
+                .pan((width - 400)/2, (height - 360)/2)
+                .use(g)
+                .use("nodfix").label("A0","se"),
+
+    dirty = true,
+    evaluated = false,
+    init = false,
+    method = "Matlab",
+
+    // steps = {
+    //     0: "Zeichnerische Bestimmung der Ersatzgelenkvierecke nach Roberts.",
+    //     1: "Übertragen der Kurbel-, Koppel- und Schwingenlänge a, b, c in dieser Reihenfolge eine gemeinsame Gerade (vollständige Strecklage).",
+    //     2: "Errichten des Koppeldreiecks über der Koppellänge b.",
+    //     3: "An den freien Enden von a und c jeweils eine parallele Gerade zu f und g antragen.",
+    //     4: "Eine parallele Gerade zur Grundlinie durch die Spitze des Koppeldreiecks ziehen.",
+    //     5: "Verlängern der Seiten f und g des Koppeldreiecks bis zu den äußeren Dreieckseiten.",
+    //     6: "Rückübertrageung der gefundenen Gliedlängen der Ersatzviergelenke an das Ursprungsviergelenk."
+    // },
+
+    panel = QuickSettings.create(10, 10, "Steuerung")
+             .addImage("","http://www.fh-dortmund.de/images/logo.svg")
+
+            //  .addProgressBar("Fortschritt", 6, mec.step, "numbers")
+
+            //  .addButton("Schritt weiter ▶", function(value) { if(mec.step<6) {mec.step+=1; panel.setValue("Fortschritt", mec.step);} updateOutput();}) // ▶
+            //  .addButton("Schritt zurück ◀", function(value) { if(mec.step>0) {mec.step-=1; panel.setValue("Fortschritt", mec.step);} updateOutput();}) // ◀
+             
+             .addRange("φ", 0, 360, mec.phi, 1, function(value) { mec.phi = value / 180 * pi; dirty = true;})
+
+             .addNumber("d (rein horizontal)", 0, 500, mec.d, 1, function(value) { mec.d = value; angles(); dirty = true; evaluated = false;})
+             .addNumber("e (rein vertikal)", -100, 100, mec.e, 1, function(value) { mec.e = value; angles(); dirty = true; evaluated = false;}) 
+            //  .saveInLocalStorage("roberts")
+            //  .addButton("reset", function() {panel.setValuesFromJSON(defaultValues);})
+    ,
+
+    // panel2 = QuickSettings.create(width - 310, 10, "Output")
+    //          .addTextArea("aktueller Schritt:")
+    //          .setWidth(300)
+    // ,
+
+    panel3 = QuickSettings.create(width - 210, 10, "Vorgaben")
+             .addNumber("φ1", 0, 360, Math.round(mec.phi_i[0]*180/pi), 1, function(value) { mec.phi_i[0] = value/180*pi; console.log(value); if (init) { angles(); dirty = true; evaluated = false;}})
+             .addNumber("φ2", 0, 360, Math.round(mec.phi_i[1]*180/pi), 1, function(value) { mec.phi_i[1] = value/180*pi; if (init) { angles(); dirty = true; evaluated = false;}})
+             .addNumber("φ3", 0, 360, Math.round(mec.phi_i[2]*180/pi), 1, function(value) { mec.phi_i[2] = value/180*pi; if (init) { angles(); dirty = true; evaluated = false;}})
+             .addNumber("ψ1", 0, 360, Math.round(mec.psi_i[0]*180/pi), 1, function(value) { mec.psi_i[0] = value/180*pi; if (init) { angles(); dirty = true; evaluated = false;}})
+             .addNumber("ψ2", 0, 360, Math.round(mec.psi_i[1]*180/pi), 1, function(value) { mec.psi_i[1] = value/180*pi; if (init) { angles(); dirty = true; evaluated = false;}})
+             .addNumber("ψ3", 0, 360, Math.round(mec.psi_i[2]*180/pi), 1, function(value) { mec.psi_i[2] = value/180*pi; if (init) { angles(); dirty = true; evaluated = false;}})
+
+             .addDropDown("Koeff. Gleichungen nach:", ["Matlab", "Goessner", "Hagedorn"], function(value) { method = value.value })
+
+             .addButton("evaluieren", function(value) {evaluate();})
+
+             .saveInLocalStorage("freudenstein")
+             .addButton("reset", function() {panel3.setValuesFromJSON(defaultValuesPanel3);})
+   ,
+             
+   defaultValuesPanel3 = panel3.getValuesAsJSON()    
+;
+
+
+
+/*
+ *  Initialisierung
+ */
+
+g2.State.linkfill = "transparent";
+init = true;  // allows angles() to work after all inputs have been added
+angles();
+// updateOutput();
+render();
+    
+    </script> 
+</body>
+</html>
