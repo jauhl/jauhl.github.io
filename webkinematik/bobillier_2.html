@@ -1,11 +1,38 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Wendepolkonstruktion nach Bobillier</title>    
+    <style>
+        html, body {
+            margin: 0px;
+        }
+        canvas {
+            display: block;  /*keine scrollbars*/
+        }
+    </style>  
+</head>
+
+<body>       
+    <canvas id="c"></canvas>
+  
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/v2/master/v2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/quicksettings/latest/quicksettings.min.js"></script>  
+    
+<!--
+    <script src="./libs/g2.min.js"></script>
+    <script src="./libs/g2.mec.min.js"></script>
+    <script src="./libs/v2.min.js"></script>
+-->
+    <script>
+    
 function position() {
     g.del().style({foc:"white"})
 
     if (panel.getValue("Wendekreis anzeigen"))
-        g.cir(mec.center.x, mec.center.y, mec.radius, {ls:"orange"})
-
-    if (panel.getValue("alt. Wendekreis anzeigen"))
-        g.cir(mec.centeralt.x, mec.centeralt.y, mec.radiusalt, {ls:"rgba(129, 165, 148, 1)"}) // alternativer Wendekreis
+        g.cir(mec.center.x, mec.center.y, mec.radius, {ls:"orange", fs:"transparent"})
 
      // Schritt 1
      if(mec.step >= 1) {
@@ -38,7 +65,7 @@ function position() {
 
      // Schritt 6
      if(mec.step >= 6) {
-        g.use(pol,mec.W).label("W","se")
+        g.use("pol",mec.W).label("W","se")
          .lin(mec.Aw.x, mec.Aw.y, mec.W.x, mec.W.y, {ld:"@dot", ls:"rgba(255, 255, 255, 0.9)"})
          .lin(mec.Bw.x, mec.Bw.y, mec.W.x, mec.W.y, {ld:"@dot", ls:"rgba(255, 255, 255, 0.9)"})
          .beg({x: mec.Aw.x, y: mec.Aw.y, w:pi + Math.atan2(mec.e_A0A.y, mec.e_A0A.x)})
@@ -47,12 +74,6 @@ function position() {
          .beg({x: mec.Bw.x, y: mec.Bw.y, w:Math.atan2(mec.e_B0B.y, mec.e_B0B.x)})
             .rec(0, 0, 8, 8, {lw:2, ls:"rgba(126, 126, 118, 0.9)", fs:"rgba(255, 255, 255, 0.6)"})
          .end()
-
-        if (panel.getValue("alt. Wendepol (Schritt 6)"))
-        //    g.cir(mec.Walt.x, mec.Walt.y, 6, {fs:"red"}).label("Walt","se")  // alt. Wendepol (Schritt 6)
-        //     .cir(mec.Walt.x, mec.Walt.y, 2.5, {fs:"black"})
-           g.use(pol2, mec.Walt).label("Walt","se")
-            .dim(mec.W, mec.Walt, {ls:"rgba(255, 255, 255, 0.9)"}).label(`${mec.WWaltLen.toFixed(2)}`, `mid`)
      }
 
      // Schritt 5
@@ -211,8 +232,8 @@ var cnv = document.getElementById('c'),
         //     return {x: this.Bw.x + this.v*v2.tilde(this.e_B0B).x, y:this.Bw.y + this.v*v2.tilde(this.e_B0B).y};
         // },
 
-        // Wendekreis zu (umständlich)
-  /*      get G1() {
+        // Wendekreis
+        get G1() {
             return ((v2.dif(this.P, this.Aw))); //+++++++++
         },
 
@@ -250,7 +271,7 @@ var cnv = document.getElementById('c'),
         },
 
         get center() {
-            return (v2.isum(v2.iscl(v2.tilde(this.e_G2),this.w), this.H2));
+            return (v2.isum(v2.scl(v2.tilde(this.e_G2),this.w), this.H2));
         },
 
         // get center() {
@@ -260,141 +281,6 @@ var cnv = document.getElementById('c'),
         get radius() {
             return (v2.len(v2.dif(this.center, this.Aw)));
         },
-*/
-        // Wendekreis besser
-        get rPW() {
-            return v2.dif(mec.W,mec.P);
-        },
-
-        get center() {
-            return v2.isum(v2.scl(mec.rPW,0.5),mec.P);
-        },
-
-        get radius() {
-            return 0.5*v2.len(mec.rPW);
-        },
-
-        //######################################################################
-        //#            alternativer Wendekreis
-        //######################################################################
-
-        get rPWalt() {
-            return v2.dif(mec.Walt,mec.P);
-        },
-
-        get centeralt() {
-            return v2.isum(v2.scl(mec.rPWalt,0.5),mec.P);
-        },
-
-        get radiusalt() {
-            return 0.5*v2.len(mec.rPWalt);
-        },
-
-        //######################################################################
-        //#            Wendepol nach Gl. 9.5
-        //######################################################################
-
-        get rPA() {
-            return v2.dif(mec.A, mec.P); //x
-        },
-
-        get rPB() {
-            return v2.dif(mec.B, mec.P); //x
-        },
-
-        get rBB0() {
-            return v2.dif(mec.B0, mec.B); //x
-        },
-
-        get rAA0() {
-            return v2.dif(mec.A0, mec.A); //x
-        },
-
-        get Walt() {
-            var rPArPA = v2.dot(mec.rPA,mec.rPA), //x
-                rPBrPB = v2.dot(mec.rPB,mec.rPB),
-                frac = 1 / v2.perp(mec.rPA,mec.rPB),
-                scalar1 = rPBrPB * ((rPBrPB / v2.dot(mec.rBB0,mec.rPB)) + 1),
-                scalar2 = rPArPA * ((rPArPA / v2.dot(mec.rAA0,mec.rPA)) + 1);
-
-            // console.log(`rPArPA: ${rPArPA}\nrPBrPB: ${rPBrPB}\nfrac: ${frac}\nscalar1: ${scalar1}\nscalar2: ${scalar2}`);
-                
-            return v2.scl( v2.dif( v2.iscl( v2.tilde(mec.rPA), scalar1), v2.iscl( v2.tilde(mec.rPB), scalar2) ),frac);
-        },
-
-
-
-        // test ohne v2 = exakt das selbe!
-        get rPA2() {
-            return {x: mec.A.x - mec.P.x, y:mec.A.y - mec.P.y};
-        },
-
-        get rPB2() {
-            return {x: mec.B.x - mec.P.x, y:mec.B.y - mec.P.y};
-        },
-
-        get rBB02() {
-            return {x: mec.B0.x - mec.B.x, y:mec.B0.y - mec.B.y};
-        },
-
-        get rAA02() {
-            return {x: mec.A0.x - mec.A.x, y:mec.A0.y - mec.A.y};
-        },
-
-        get rPArPA2() {
-            return mec.rPA.x*mec.rPA.x + mec.rPA.y*mec.rPA.y;
-        },
-
-        get rPBrPB2() {
-            return mec.rPB.x*mec.rPB.x + mec.rPB.y*mec.rPB.y;
-        },
-
-        get frac2() {
-            return 1 / ( - mec.rPA2.y*mec.rPB2.x + mec.rPA2.x*mec.rPB2.y );
-        },
-
-        get scalar12() {
-            return mec.rPBrPB2 * ((mec.rPBrPB2 / ( mec.rBB02.x*mec.rPB2.x + mec.rBB02.y*mec.rPB2.y )  ) + 1);
-        },
-
-        get scalar22() {
-            return mec.rPArPA2 * ((mec.rPArPA2 /  ( mec.rAA02.x*mec.rPA2.x + mec.rAA02.y*mec.rPA2.y ) ) + 1);
-        },
-
-        get Walt2() {                
-            return {x: mec.frac*(mec.scalar12*(-mec.rPA2.y) - mec.scalar22*(-mec.rPB2.y) ), y: mec.frac*(mec.scalar12*(mec.rPA2.x) - mec.scalar22*(mec.rPB2.x) )};
-        },
-
-        // Variablen ausgelagert
-        // get rPArPA() {
-        //     return v2.dot(mec.rPA,mec.rPA); //x
-        // },
-
-        // get rPBrPB() {
-        //     return v2.dot(mec.rPB,mec.rPB);
-        // },
-
-        // get frac() {
-        //     return 1 / v2.perp(mec.rPA,mec.rPB);
-        // },
-
-        // get scalar1() {
-        //     return mec.rPBrPB * ((mec.rPBrPB / v2.dot(mec.rBB0,mec.rPB)) + 1);
-        // },
-
-        // get scalar2() {
-        //     return mec.rPArPA * ((mec.rPArPA / v2.dot(mec.rAA0,mec.rPA)) + 1);
-        // },
-
-        // get Walt_simple() {                
-        //     return v2.scl(   v2.dif(     v2.scl(   v2.tilde(mec.rPA), mec.scalar1)    ,     v2.scl(v2.tilde(mec.rPB), mec.scalar2)   )                  ,mec.frac)   ;  // nach bugfix iscl nutzbar
-        // },
-
-        get WWaltLen() {
-            return v2.len(v2.dif(mec.Walt,mec.W));
-        },
-
-       
 
         //######################################################################
         //#            Kinematik
@@ -464,10 +350,6 @@ var cnv = document.getElementById('c'),
     },
 
     g = g2(),
-    pol = g2().cir(0,0,6,{ls:"@nodcolor",fs:"rgba(255, 153, 0, 0.8)",lwnosc:true})
-               .cir(0,0,2.5,{ls:"@nodcolor",fs:"@nodcolor"});
-    pol2 = g2().cir(0,0,6,{ls:"@nodcolor",fs:"rgba(129, 165, 148, 1)",lwnosc:true})
-               .cir(0,0,2.5,{ls:"@nodcolor",fs:"@nodcolor"});
     world = g2().clr().cartesian().style({foc:"white"})
                 .rec(-width,-height,2*width,2*height,{ls:"rgba(52, 76, 107, 1)",fs:"rgba(52, 76, 107, 1)"})  // blueprint blue rgba(52, 76, 107, 1)
                 .grid("rgba(255, 255, 255, 0.1)",100)
@@ -489,13 +371,11 @@ var cnv = document.getElementById('c'),
     },
 
     panel = QuickSettings.create(10, 10, "Steuerung")
-             .addImage("","http://www.fh-dortmund.de/images/logo.svg")
+             .addImage("","https://jauhl.github.io/img/fhlogo.svg")
              .addProgressBar("Fortschritt", 6, mec.step, "numbers")
              .addButton("Schritt weiter ▶", function(value) { if(mec.step<6) {mec.step+=1; dirty = true; panel.setValue("Fortschritt", mec.step);} updateOutput();}) // ▶
              .addButton("Schritt zurück ◀", function(value) { if(mec.step>0) {mec.step-=1; dirty = true; panel.setValue("Fortschritt", mec.step);} updateOutput();}) // ◀
              .addBoolean("Wendekreis anzeigen", false, function() {dirty = true;})
-             .addBoolean("alt. Wendekreis anzeigen", false, function() {dirty = true;})
-             .addBoolean("alt. Wendepol (Schritt 6)", false, function() {dirty = true;})
              .addRange("φ", 0, 360, 60, 1, function(value) { mec.phi = value / 180 * pi; dirty = true;})
              .addNumber("a", 0, 300, 45, 1, function(value) { mec.a = value; dirty = true;})
              .addNumber("b", 0, 300, 120, 1, function(value) { mec.b = value; dirty = true;})  // "b", 0, 300, 150, 1
@@ -512,6 +392,28 @@ var cnv = document.getElementById('c'),
  *  Initialisierung
  */
 
+window.onresize = function() {
+    // cancelAnimationFrame(requestAnimationFrame(render));
+    width = cnv.width = window.innerWidth;
+    height = cnv.height = window.innerHeight;
+
+    panel2.setPosition( width - 310, 10);
+
+    world = g2().del().clr().cartesian().style({foc:"white"})  // wenn hier .del(), wendekreis fs transparent notwendig!
+                .rec(-width,-height,2*width,2*height,{ls:"rgba(52, 76, 107, 1)",fs:"rgba(52, 76, 107, 1)"})  // blueprint blue rgba(52, 76, 107, 1)
+                .grid("rgba(255, 255, 255, 0.1)",100)
+                .grid("rgba(255, 255, 255, 0.1)",20)
+                .pan((width - (mec.a + mec.d))/2, (height - mec.c)/2) 
+                .use(g)
+                .use("gnd").label("A0","se");
+
+    dirty = true;
+};
+
 // Animation starten
 updateOutput();
-render();
+render();    
+    
+    </script> 
+</body>
+</html>

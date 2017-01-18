@@ -1,3 +1,44 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Satz von Roberts</title>    
+    <style>
+        html, body {
+            margin: 0px;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>  
+</head>
+
+<body>       
+    <canvas id="c"></canvas>
+    <canvas id="c2"></canvas>
+    
+    
+
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/v2/master/v2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/quicksettings/latest/quicksettings.min.js"></script>      
+ <!-- 
+    <script src="./libs/g2.min.js"></script>
+    <script src="./libs/g2.mec.min.js"></script>
+    <script src="./libs/v2.min.js"></script>
+    <script src="./libs/quicksettings.min.js"></script>
+-->
+    <script>
+
+// function getParams() {
+//     location.search.substr(1).split("&").forEach(function(item) {
+//         queryObject[item.split("=")[0]] = +item.split("=")[1]
+//     })
+// }    
+    
 function position() {
     g.del().style({foc:"white"})
      
@@ -55,6 +96,10 @@ function gtria() {
         // Schritt 3
         if(mec.step >= 3 & mec.step != 6) {
             triangle.ply([mec.A0tria, mec.SP3tria, mec.B0tria],false, {fs:"rgba(200,200,200,0.2)", ls:"rgba(255, 255, 255, 0.8)"})
+                    // .lin(mec.origintria.x + mec.d, mec.origintria.y, mec.SPCtria.x, mec.SPCtria.y, {ls:"rgba(255, 255, 255, 0.8)"})  // C0
+                    //     .label("C0","end","right")
+                    // .dim({x:mec.origintria.x, y:mec.origintria.y - 25}, {dx:mec.d, dy:0}, {ls:"rgba(255, 255, 255, 0.8)"})
+                    //     .label("d")
         }
 
         // Schritt 2
@@ -128,15 +173,33 @@ var cnv = document.getElementById('c'),
 
     pi = Math.PI,
 
+    queryObject = {},
+
+    getParams = function () {  // must be called immediatelly after initiazation of queryObject
+                    location.search.substr(1).split("&").forEach(function(item) {
+                        queryObject[item.split("=")[0]] = +item.split("=")[1]
+                    })
+                }(),          
+
     mec = {
         phi:0,
-        a:100,
-        b:200,
-        c:360, // Math.sqrt(300*300 + 200*200),
-        d:300,
-        e:-100,
-        j:200, // lam nicht normalisiert
-        k:100, // mu mnicht normalisiert
+
+        // a:100,
+        // b:200,
+        // c:360, // Math.sqrt(300*300 + 200*200),
+        // d:300,
+        // e:-100,
+        // j:200, // lam nicht normalisiert
+        // k:100, // mu mnicht normalisiert
+
+
+        a: isNaN(queryObject.a)||queryObject.a<=0 ? 100 : queryObject.a,
+        b: isNaN(queryObject.b)||queryObject.b<=0 ? 200 : queryObject.b,
+        c: isNaN(queryObject.c)||queryObject.c<=0 ? 360 : queryObject.c,
+        d: isNaN(queryObject.d)||queryObject.d<=0 ? 300 : queryObject.d,
+        e: isNaN(queryObject.e) ? -100 : queryObject.e,
+        j: isNaN(queryObject.j) ? 200 : queryObject.j, // lam nicht normalisiert
+        k: isNaN(queryObject.k) ? 100 : queryObject.k, // mu mnicht normalisiert
 
         step: 0,
         largeNum: 999999999,
@@ -238,6 +301,16 @@ var cnv = document.getElementById('c'),
                 P2 =  v2.isum(v2.scl(mec.eAKtria, mec.largeNum), mec.A0tria),
                 P3 =  mec.B0tria,
                 P4 =  v2.isum(v2.scl(mec.eBKtria, mec.largeNum), mec.B0tria),
+                SP = cross(  cross(P1,P2),   cross(P3,P4) );
+
+            return {x: SP.x/SP.z, y: SP.y/SP.z};
+        },
+
+        get SPCtria() {
+            var P1 =  mec.A0tria,
+                P2 =  v2.isum(v2.scl(mec.eAKtria, mec.largeNum), mec.A0tria),
+                P3 =  v2(mec.origintria.x + mec.d, mec.origintria.y)
+                P4 =  v2.isum(v2.scl(mec.eBKtria, mec.largeNum), P3),
                 SP = cross(  cross(P1,P2),   cross(P3,P4) );
 
             return {x: SP.x/SP.z, y: SP.y/SP.z};
@@ -372,7 +445,7 @@ var cnv = document.getElementById('c'),
                 .rec(-width,-height,2*width,2*height,{ls:"rgba(52, 76, 107, 1)",fs:"rgba(52, 76, 107, 1)"})  // blueprint blue rgba(52, 76, 107, 1)
                 .grid("rgba(255, 255, 255, 0.1)",100)
                 .grid("rgba(255, 255, 255, 0.1)",20)
-                .pan((width - 2*(mec.a + mec.d))/2, (height - mec.c)/2)
+                .pan(0.3*width, 0.3*height)
                 .use(g)
                 .use("nodfix").label("A0","se"),
 
@@ -385,11 +458,11 @@ var cnv = document.getElementById('c'),
         3: "An den freien Enden von a und c jeweils eine parallele Gerade zu f und g antragen.",
         4: "Eine parallele Gerade zur Grundlinie durch die Spitze des Koppeldreiecks ziehen.",
         5: "Verlängern der Seiten f und g des Koppeldreiecks bis zu den äußeren Dreieckseiten.",
-        6: "Rückübertrageung der gefundenen Gliedlängen der Ersatzviergelenke an das Ursprungsviergelenk."
+        6: "Rückübertragung der gefundenen Gliedlängen der Ersatzviergelenke an das Ursprungsviergelenk und Konstruktion von C0 durch Parallelogramme."
     },
 
     panel = QuickSettings.create(10, 10, "Steuerung")
-             .addImage("","http://www.fh-dortmund.de/images/logo.svg")
+             .addImage("","https://jauhl.github.io/img/fhlogo.svg")
 
              .addProgressBar("Fortschritt", 6, mec.step, "numbers")
 
@@ -407,10 +480,11 @@ var cnv = document.getElementById('c'),
              .addNumber("c", 0, 500, mec.c, "any", function(value) { mec.c = value; dirty = true; gtria();})  // "c", 0, 300, 100, 1
              .addNumber("d (rein horizontal)", 0, 500, mec.d, 1, function(value) { mec.d = value; dirty = true; gtria();})
              .addNumber("e (rein vertikal)", -100, 100, mec.e, 1, function(value) { mec.e = value; dirty = true; gtria();})
-             .addNumber("Positon Lot Koppeldreieck", -500, 500, mec.j, "any", function(value) { mec.j = value; dirty = true; gtria();})
-             .addNumber("Höhe Koppeldreieck", -500, 500, mec.k, "any", function(value) { mec.k = value; dirty = true; gtria();})
+             .addNumber("j (Position Lot KD)", -500, 500, mec.j, "any", function(value) { mec.j = value; dirty = true; gtria();})
+             .addNumber("k (Höhe KD)", -500, 500, mec.k, "any", function(value) { mec.k = value; dirty = true; gtria();})
             //  .saveInLocalStorage("roberts")
             //  .addButton("reset", function() {panel.setValuesFromJSON(defaultValues);})
+            // .setHeight(height - 20)
     ,
 
     panel2 = QuickSettings.create(width - 310, 10, "Output")
@@ -421,11 +495,42 @@ var cnv = document.getElementById('c'),
     // defaultValues = panel.getValuesAsJSON();
 ;
 
+
+/*
+ *  Eventlistener
+ */
+
+window.onresize = function() {
+    // cancelAnimationFrame(requestAnimationFrame(render));
+    width = cnv.width = cnv2.width = window.innerWidth;
+    height = cnv.height = cnv2.height = window.innerHeight;
+
+
+    panel2.setPosition( width - 310, 10);
+
+    world = g2().del().clr().cartesian().style({foc:"white"})
+                .rec(-width,-height,2*width,2*height,{ls:"rgba(52, 76, 107, 1)",fs:"rgba(52, 76, 107, 1)"})  // blueprint blue rgba(52, 76, 107, 1)
+                .grid("rgba(255, 255, 255, 0.1)",100)
+                .grid("rgba(255, 255, 255, 0.1)",20)
+                .pan(0.3*width, 0.3*height) //.pan((width - 2*(mec.a + mec.d))/2, (height - mec.c)/2)
+                .use(g)
+                .use("nodfix").label("A0","se");
+
+    dirty = true;
+    gtria();
+};
+
+
 /*
  *  Initialisierung
  */
 
-// Animation starten
+if (panel._content.clientHeight > (height - 20)) panel.setHeight(height-20);  // resize qs panel if necessary
+// getParams();
 g2.State.linkfill = "transparent";
 updateOutput();
-render();
+render();    
+    
+    </script> 
+</body>
+</html>

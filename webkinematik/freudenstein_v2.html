@@ -1,0 +1,349 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Dreiwinkelzuordnung</title>    
+    <style>
+        html, body {
+            margin: 0px;
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>  
+</head>
+
+<body>       
+    <canvas id="c"></canvas>
+    <canvas id="c2"></canvas>
+
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/v2/master/v2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/quicksettings/latest/quicksettings.min.js"></script>      
+ <!-- 
+    <script src="./libs/g2.min.js"></script>
+    <script src="./libs/g2.mec.min.js"></script>
+    <script src="./libs/v2.min.js"></script>
+    <script src="./libs/quicksettings.min.js"></script>
+-->
+    <script>
+    
+function position() {
+    g.del().style({foc:"white"})
+     
+    if (evaluated) {
+        g.bar2(mec.A0,mec.A)
+         .bar2(mec.A,mec.B)
+         .bar2(mec.B0,mec.B)
+
+         .use("nod",mec.A).label("A","nw")
+         .use("nod",mec.B).label("B","ne")
+    } 
+    
+    g.use("nodfix",mec.B0).label("B0","se")
+}
+
+function angles() {
+    // if (init) {
+        var xOff = 0.4*width, // (width - 400)/2
+            yOff = 0.3*height; // (height - 360)/2
+
+        angl.del().clr().cartesian().style({foc:"papayawhip", ld:"@dash", ls:"rgba(255, 255, 255, 0.8)"})         
+
+        for (var i = 0; i < 3; i++) {
+            if (i == 1 && (panel3.getValue("autom. Zwischenwinkel"))) {
+                continue;
+            }
+            angl.lin(xOff + mec.A0.x, yOff + mec.A0.y, xOff + mec.d*Math.cos(mec.phi_i[i]), yOff + mec.d*Math.sin(mec.phi_i[i])).label(`\u03C6${i+1}`,`end`,`right`)
+                .lin(xOff + mec.B0.x, yOff + mec.B0.y, xOff + mec.B0.x + mec.d*Math.cos(mec.psi_i[i]), yOff + mec.B0.y + mec.d*Math.sin(mec.psi_i[i])).label(`\u03C8${i+1}`,`end`,`right`)  
+            // console.log(`phi${i+1} = ${mec.phi_i[i]*180/pi}, psi${i+1} = ${mec.psi_i[i]*180/pi}`)
+        }
+
+        angl.exe(ctx2)
+    // }
+}   
+
+function autoangles() {
+    if (panel3.getValue("autom. Zwischenwinkel")) {
+        var tempphi2 = (mec.phi_i[0]+((mec.phi_i[2] - mec.phi_i[0])/2))*180/pi,
+            temppsi2 = (mec.psi_i[0]+((mec.psi_i[2] - mec.psi_i[0])/2))*180/pi;
+            // console.log(`phi 2 = ${tempphi2},  psi 2 = ${temppsi2}`)
+
+        panel3.setValue("φ2", tempphi2) //Math.round(tempphi2)) 
+              .setValue("ψ2", temppsi2) //Math.round(temppsi2))
+              .disableControl("φ2")
+              .disableControl("ψ2")
+    } else {
+        panel3.enableControl("φ2")
+              .enableControl("ψ2")
+    }
+    angles();
+}
+
+function render() {
+    if (dirty) {
+        position();
+        world.exe(ctx);
+        dirty = false;
+    }
+    requestAnimationFrame(render);
+}
+
+// function updateOutput() {
+//     panel2.setValue("aktueller Schritt:", steps[mec.step]);
+// }
+
+function norm(value, min, max) {
+    return (value - min)/(max - min);
+}
+
+// cross product; takes objects with at least 2 dimensions and returns a 3d object
+function cross(a,b) {
+    var az = (a.z != 0) ? (a.z || 1) : 0,
+        bz = (b.z != 0) ? (b.z || 1) : 0;
+
+    return {x: a.y*bz - az*b.y , y: az*b.x - a.x*bz , z: a.x*b.y  -  a.y*b.x};
+}
+
+function evaluate() {
+    mec.KML;
+    mec.a = mec.d/mec.K1;
+    mec.c = mec.d/mec.K2;
+    mec.b = Math.sqrt(mec.a*mec.a + mec.c*mec.c + mec.d*mec.d - 2*mec.a*mec.c*mec.K3);
+    // mec.c = Math.abs(mec.d/mec.K2);
+
+    console.log("a = " + mec.a + ",   b = " + mec.b + ",   c = " + mec.c  );
+
+    panel.setRangeParameters("φ", mec.phi_i[0]*180/pi, mec.phi_i[2]*180/pi, 1);
+
+    // panel.setValue("φ", Math.round(mec.phi_i[0]*180/pi));
+    panel._controls["φ"].setValue(Math.round(mec.phi_i[0]*180/pi))
+    // mec.phi = Math.round(mec.phi_i[0]*180/pi)/180*pi;
+
+    evaluated = true;
+}
+
+var cnv = document.getElementById('c'),
+    ctx = cnv.getContext('2d'),
+    cnv2 = document.getElementById('c2'),
+    ctx2 = cnv2.getContext('2d'),
+    width = cnv.width = cnv2.width = window.innerWidth,
+    height = cnv.height = cnv2.height = window.innerHeight,
+
+    pi = Math.PI,
+
+    mec = {
+        phi:0,
+        phi_i: [30/180*pi,60/180*pi,90/180*pi], // predefined angles
+        psi_i: [25/180*pi,65/180*pi,115/180*pi], // predefined angles
+        a:100,
+        b:200,
+        c:360,
+        d:200,
+
+        step: 0,
+        largeNum: 999999999,
+
+        assembly:1,  // direction of mec. assembly, found in mue of theta
+
+        //######################################################################
+        //#            Loesung
+        //######################################################################
+
+        K1: 0, K2: 0, K3: 0,
+
+        //######################################################################
+        //#            Matlab
+        //######################################################################
+        get KML() {
+            var phi1 = mec.phi_i[0], phi2 = mec.phi_i[1], phi3 = mec.phi_i[2],
+                psi1 = mec.psi_i[0], psi2 = mec.psi_i[1], psi3 = mec.psi_i[2],
+                denominator = Math.cos(phi1)*Math.cos(psi2) - Math.cos(phi2)*Math.cos(psi1) - Math.cos(phi1)*Math.cos(psi3) + Math.cos(phi3)*Math.cos(psi1) + Math.cos(phi2)*Math.cos(psi3) - Math.cos(phi3)*Math.cos(psi2);
+
+                // Matrizenlösung (rein Matlab)
+                mec.K1 = -(Math.cos(phi1 - psi1)*Math.cos(phi2) - Math.cos(phi1 - psi1)*Math.cos(phi3) - Math.cos(phi2 - psi2)*Math.cos(phi1) + Math.cos(phi2 - psi2)*Math.cos(phi3) + Math.cos(phi3 - psi3)*Math.cos(phi1) 
+                         - Math.cos(phi3 - psi3)*Math.cos(phi2))/denominator,  
+
+                mec.K2 = -(Math.cos(phi1 - psi1)*Math.cos(psi2) - Math.cos(phi1 - psi1)*Math.cos(psi3) - Math.cos(phi2 - psi2)*Math.cos(psi1) + Math.cos(phi2 - psi2)*Math.cos(psi3) + Math.cos(phi3 - psi3)*Math.cos(psi1) 
+                         - Math.cos(phi3 - psi3)*Math.cos(psi2))/denominator,
+
+                mec.K3 = (Math.cos(phi1 - psi1)*Math.cos(phi2)*Math.cos(psi3) - Math.cos(phi1 - psi1)*Math.cos(phi3)*Math.cos(psi2) - Math.cos(phi2 - psi2)*Math.cos(phi1)*Math.cos(psi3) + Math.cos(phi2 - psi2)*Math.cos(phi3)*
+                         Math.cos(psi1) + Math.cos(phi3 - psi3)*Math.cos(phi1)*Math.cos(psi2) - Math.cos(phi3 - psi3)*Math.cos(phi2)*Math.cos(psi1))/denominator;
+            
+            console.log("K1 = " + mec.K1 + "\nK2 = " + mec.K2 + "\nK3 = " + mec.K3);
+            return; 
+        },
+
+
+        //######################################################################
+        //#            Kinematik
+        //######################################################################
+
+        get ephi() { 
+            return { x:Math.cos(this.phi), y:Math.sin(this.phi) }; 
+        },
+
+        get g() {
+            return {x:this.d - this.a*Math.cos(this.phi), y:- this.a*Math.sin(this.phi)}; 
+        },
+
+        get gg() {
+            return this.a*this.a + this.d*this.d - 2*this.a*this.d*Math.cos(this.phi); 
+        },
+
+        get theta() {
+            var gg = this.gg, bb_gg = (this.b*this.b)/gg, g = this.g,
+                lambda = 0.5*(bb_gg - this.c*this.c/gg + 1),
+                mue = mec.assembly*Math.sqrt(bb_gg - lambda*lambda);
+            return Math.atan2( (1/this.b)*(lambda*g.y + mue*g.x), (1/this.b)*(lambda*g.x - mue*g.y) )
+        },
+
+        get etheta() { 
+            return { x:Math.cos(this.theta), y:Math.sin(this.theta)}; 
+        },
+
+        get psi() {
+            var etheta = this.etheta;
+            return Math.atan2( (1/this.c)*(this.b*etheta.y - this.g.y), (1/this.c)*(this.b*etheta.x - this.g.x) )
+        },
+
+        get epsi() { 
+            return { x:Math.cos(this.psi), y:Math.sin(this.psi)}; 
+        },
+
+        //######################################################################
+        //#            Punkte
+        //######################################################################
+
+        A0: {x:0, y:0},
+
+        get B0() { 
+            return {x:this.d, y:0} 
+        },
+
+        get A() { 
+            return {x:this.A0.x + this.a*this.ephi.x, y:this.A0.y + this.a*this.ephi.y}; 
+        },
+
+        get B() { 
+            return {x:this.B0.x + this.c*this.epsi.x, y:this.B0.y + this.c*this.epsi.y}; 
+        }
+    },
+
+    g = g2(),
+    angl = g2(),
+    pol = g2().cir(0,0,6,{ls:"@nodcolor",fs:"rgba(255, 153, 0, 0.8)",lwnosc:true})
+               .cir(0,0,2.5,{ls:"@nodcolor",fs:"@nodcolor"});
+    pol2 = g2().cir(0,0,6,{ls:"@nodcolor",fs:"rgba(129, 165, 148, 1)",lwnosc:true})
+               .cir(0,0,2.5,{ls:"@nodcolor",fs:"@nodcolor"});
+    world = g2().clr().cartesian().style({foc:"white"})
+                .rec(-width,-height,2*width,2*height,{ls:"rgba(52, 76, 107, 1)",fs:"rgba(52, 76, 107, 1)"})  // blueprint blue rgba(52, 76, 107, 1)
+                .grid("rgba(255, 255, 255, 0.1)",100)
+                .grid("rgba(255, 255, 255, 0.1)",20)
+                .pan(0.4*width, 0.3*height) // .pan((width - 400)/2, (height - 360)/2)
+                .use(g)
+                .use("nodfix").label("A0","se"),
+
+    dirty = true,
+    evaluated = false,
+    init = false,
+
+    // steps = {
+    //     0: "Zeichnerische Bestimmung der Ersatzgelenkvierecke nach Roberts.",
+    //     1: "Übertragen der Kurbel-, Koppel- und Schwingenlänge a, b, c in dieser Reihenfolge eine gemeinsame Gerade (vollständige Strecklage).",
+    //     2: "Errichten des Koppeldreiecks über der Koppellänge b.",
+    //     3: "An den freien Enden von a und c jeweils eine parallele Gerade zu f und g antragen.",
+    //     4: "Eine parallele Gerade zur Grundlinie durch die Spitze des Koppeldreiecks ziehen.",
+    //     5: "Verlängern der Seiten f und g des Koppeldreiecks bis zu den äußeren Dreieckseiten.",
+    //     6: "Rückübertrageung der gefundenen Gliedlängen der Ersatzviergelenke an das Ursprungsviergelenk."
+    // },
+
+    panel = QuickSettings.create(10, 10, "Steuerung")
+             .addImage("","https://jauhl.github.io/img/fhlogo.svg")
+
+            //  .addProgressBar("Fortschritt", 6, mec.step, "numbers")
+
+            //  .addButton("Schritt weiter ▶", function(value) { if(mec.step<6) {mec.step+=1; panel.setValue("Fortschritt", mec.step);} updateOutput();}) // ▶
+            //  .addButton("Schritt zurück ◀", function(value) { if(mec.step>0) {mec.step-=1; panel.setValue("Fortschritt", mec.step);} updateOutput();}) // ◀
+             
+             .addRange("φ", 0, 360, mec.phi, 1, function(value) { mec.phi = value/180*pi; dirty = true;})
+
+             .addNumber("d (rein horizontal)", 0, 500, mec.d, 1, function(value) { mec.d = value; angles(); dirty = true; evaluated = false;})
+             
+             .addButton("Montagerichtung umkehren", function(value) { mec.assembly *= -1; dirty = true;})
+            //  .saveInLocalStorage("roberts")
+            //  .addButton("reset", function() {panel.setValuesFromJSON(defaultValues);})
+    ,
+
+    // panel2 = QuickSettings.create(width - 310, 10, "Output")
+    //          .addTextArea("aktueller Schritt:")
+    //          .setWidth(300)
+    // ,
+
+    panel3 = QuickSettings.create( width - 210, 10, "Winkelvorgaben")
+             .addNumber("φ1", 0, 360, Math.round(mec.phi_i[0]*180/pi), 1, function(value) { mec.phi_i[0] = value/180*pi; if (init) { autoangles(); dirty = true; evaluated = false;}})
+             .addNumber("φ2", 0, 360, Math.round(mec.phi_i[1]*180/pi), "any", function(value) { mec.phi_i[1] = value/180*pi; if (init) { angles(); dirty = true; evaluated = false;}})
+             .addNumber("φ3", 0, 360, Math.round(mec.phi_i[2]*180/pi), 1, function(value) { mec.phi_i[2] = value/180*pi; if (init) { autoangles(); dirty = true; evaluated = false;}})
+             .addNumber("ψ1", 0, 360, Math.round(mec.psi_i[0]*180/pi), 1, function(value) { mec.psi_i[0] = value/180*pi; if (init) { autoangles(); dirty = true; evaluated = false;}})
+             .addNumber("ψ2", 0, 360, Math.round(mec.psi_i[1]*180/pi), "any", function(value) { mec.psi_i[1] = value/180*pi; if (init) { angles(); dirty = true; evaluated = false;}})
+             .addNumber("ψ3", 0, 360, Math.round(mec.psi_i[2]*180/pi), 1, function(value) { mec.psi_i[2] = value/180*pi; if (init) { autoangles(); dirty = true; evaluated = false;}})
+             
+             .addBoolean("autom. Zwischenwinkel", false, function() {autoangles(); dirty = true;})
+
+             .addButton("evaluieren", function(value) {evaluate();})
+
+            //  .saveInLocalStorage("freudensteinv2") // flush storage or rename after changes in panel-elements
+            //  .addButton("reset", function() {panel3.setValuesFromJSON(defaultValuesPanel3);})
+//    ,
+             
+//    defaultValuesPanel3 = panel3.getValuesAsJSON()    
+;
+
+
+
+/*
+ *  Eventlistener
+ */
+
+window.onresize = function() {
+    // cancelAnimationFrame(requestAnimationFrame(render));
+    width = cnv.width = cnv2.width = window.innerWidth;
+    height = cnv.height = cnv2.height = window.innerHeight;
+
+    panel3.setPosition( width - 210, 10);
+
+    world = g2().del().clr().cartesian().style({foc:"white"})
+                .rec(-width,-height,2*width,2*height,{ls:"rgba(52, 76, 107, 1)",fs:"rgba(52, 76, 107, 1)"})  // blueprint blue rgba(52, 76, 107, 1)
+                .grid("rgba(255, 255, 255, 0.1)",100)
+                .grid("rgba(255, 255, 255, 0.1)",20)
+                .pan(0.4*width, 0.3*height) // .pan((width - 400)/2, (height - 360)/2)
+                .use(g)
+                .use("nodfix").label("A0","se");
+
+    dirty = true;
+    // render();
+    angles();
+};
+
+
+
+/*
+ *  Initialisierung
+ */
+
+if (panel._content.clientHeight > (height - 20)) panel.setHeight(height-20);  // resize qs panel if necessary
+if (panel3._content.clientHeight > (height - 20)) panel.setHeight(height-20);  // resize qs panel if necessary
+g2.State.linkfill = "transparent";
+init = true;  // allows angles() to work after all inputs have been added
+// angles();
+autoangles();
+// updateOutput();
+render();
+    
+    </script> 
+</body>
+</html>
