@@ -2,7 +2,6 @@
 <html>
 <head>
     <meta charset='utf-8'>
- <!--   <meta name=viewport content="width=device-width, initial-scale=1"> -->
     <title>Satz von Roberts</title>    
     <style>
         html, body {
@@ -19,46 +18,38 @@
 <body>       
     <canvas id="c"></canvas>
     <canvas id="c2"></canvas>
-    
-    
-
+<!--      
+    <script src="./libs/g2.min.js"></script>
+    <script src="./libs/g2.mec.min.js"></script>
+    <script src="./libs/quicksettings.min.js"></script>
+    <script src="./libs/v2.min.js"></script>
+-->
     <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
     <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>
     <script src="https://gitcdn.xyz/repo/goessner/v2/master/v2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/quicksettings/latest/quicksettings.min.js"></script>      
- <!-- 
-    <script src="./libs/g2.min.js"></script>
-    <script src="./libs/g2.mec.min.js"></script>
-    <script src="./libs/v2.min.js"></script>
-    <script src="./libs/quicksettings.min.js"></script>
--->
-    <script>
+    <script src="https://cdn.jsdelivr.net/quicksettings/latest/quicksettings.min.js"></script>  
 
-// function getParams() {
-//     location.search.substr(1).split("&").forEach(function(item) {
-//         queryObject[item.split("=")[0]] = +item.split("=")[1]
-//     })
-// }    
+    <script>
     
 function position() {
     g.del().style({foc:"white"})
      
     if (panel.getValue("Ersatzviergelenk 1")) {
         g.bar2(mec.A0,mec.A1)
-         .bar2(mec.C0,mec.C1)  //.label(`${v2.len(v2.dif(mec.C1,mec.C0)).toFixed(2)}`,"mid")
+         .bar2(mec.C0,mec.C1)  
          .ply([mec.A1, mec.K, mec.C1], true, {fs:"rgba(200,100,100,0.5)"})
          .link2([mec.A1, mec.K, mec.C1], true)
     }
 
     if (panel.getValue("Ersatzviergelenk 2")) {
-        g.bar2(mec.B0,mec.B2)  //.label(`${v2.len(v2.dif(mec.B2,mec.B0)).toFixed(2)}`,"mid")
-         .bar2(mec.C0,mec.C2)  //.label(`${v2.len(v2.dif(mec.C2,mec.C0)).toFixed(2)}`,"mid")
+        g.bar2(mec.B0,mec.B2)  
+         .bar2(mec.C0,mec.C2)  
          .ply([mec.B2, mec.K, mec.C2], true, {fs:"rgba(100,200,100,0.5)"})
          .link2([mec.B2, mec.K, mec.C2], true)
     }
 
-     // Ursprungs KS
-     g.bar2(mec.A0,mec.A)
+    // Ursprungs KS
+    g.bar2(mec.A0,mec.A)
      .bar2(mec.B0,mec.B)
      .ply([mec.A, mec.K, mec.B], true, {fs:"rgba(200,200,200,0.5)"})
      .link2([mec.A, mec.K, mec.B], true)
@@ -97,10 +88,6 @@ function gtria() {
         // Schritt 3
         if(mec.step >= 3 & mec.step != 6) {
             triangle.ply([mec.A0tria, mec.SP3tria, mec.B0tria],false, {fs:"rgba(200,200,200,0.2)", ls:"rgba(255, 255, 255, 0.8)"})
-                    // .lin(mec.origintria.x + mec.d, mec.origintria.y, mec.SPCtria.x, mec.SPCtria.y, {ls:"rgba(255, 255, 255, 0.8)"})  // C0
-                    //     .label("C0","end","right")
-                    // .dim({x:mec.origintria.x, y:mec.origintria.y - 25}, {dx:mec.d, dy:0}, {ls:"rgba(255, 255, 255, 0.8)"})
-                    //     .label("d")
         }
 
         // Schritt 2
@@ -185,15 +172,6 @@ var cnv = document.getElementById('c'),
     mec = {
         phi:0,
 
-        // a:100,
-        // b:200,
-        // c:360, // Math.sqrt(300*300 + 200*200),
-        // d:300,
-        // e:-100,
-        // j:200, // lam nicht normalisiert
-        // k:100, // mu mnicht normalisiert
-
-
         a: isNaN(queryObject.a)||queryObject.a<=0 ? 100 : queryObject.a,
         b: isNaN(queryObject.b)||queryObject.b<=0 ? 200 : queryObject.b,
         c: isNaN(queryObject.c)||queryObject.c<=0 ? 360 : queryObject.c,
@@ -223,11 +201,7 @@ var cnv = document.getElementById('c'),
             var rAB = mec.rAB;
             return v2.dot(v2.tilde(rAB),mec.A1) / v2.sqr(rAB);
         },
-/*
-        get lam() { // normalized j, alternative
-            return norm(mec.j,0,mec.b);
-        },
-*/
+
         get A1() {  // entspricht rA0A1 und rAK
             return v2.dif(mec.K,mec.A);
         },
@@ -483,17 +457,11 @@ var cnv = document.getElementById('c'),
              .addNumber("e (rein vertikal)", -100, 100, mec.e, 1, function(value) { mec.e = value; dirty = true; gtria();})
              .addNumber("j (Position Lot KD)", -500, 500, mec.j, "any", function(value) { mec.j = value; dirty = true; gtria();})
              .addNumber("k (Höhe KD)", -500, 500, mec.k, "any", function(value) { mec.k = value; dirty = true; gtria();})
-            //  .saveInLocalStorage("roberts")
-            //  .addButton("reset", function() {panel.setValuesFromJSON(defaultValues);})
-            // .setHeight(height - 20)
     ,
 
     panel2 = QuickSettings.create(width - 310, 10, "Output")
              .addTextArea("aktueller Schritt:")
              .setWidth(300)
-    
-
-    // defaultValues = panel.getValuesAsJSON();
 ;
 
 
@@ -502,7 +470,6 @@ var cnv = document.getElementById('c'),
  */
 
 window.onresize = function() {
-    // cancelAnimationFrame(requestAnimationFrame(render));
     width = cnv.width = cnv2.width = window.innerWidth;
     height = cnv.height = cnv2.height = window.innerHeight;
 
@@ -527,7 +494,6 @@ window.onresize = function() {
  */
 
 if (panel._content.clientHeight > (height - 20)) panel.setHeight(height-20);  // resize qs panel if necessary
-// getParams();
 g2.State.linkfill = "transparent";
 updateOutput();
 render();    

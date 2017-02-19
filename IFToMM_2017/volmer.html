@@ -19,17 +19,17 @@
 <body>
     <canvas id="c"></canvas>
     <canvas id="c2"></canvas>
-
+<!--      
+    <script src="./libs/g2.min.js"></script>
+    <script src="./libs/g2.mec.min.js"></script>
+    <script src="./libs/quicksettings.min.js"></script>
+    <script src="./libs/v2.min.js"></script>
+-->    
     <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
     <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>
     <script src="https://gitcdn.xyz/repo/goessner/v2/master/v2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/quicksettings/latest/quicksettings.min.js"></script>
- <!--
-    <script src="./libs/g2.min.js"></script>
-    <script src="./libs/g2.mec.min.js"></script>
-    <script src="./libs/v2.min.js"></script>
-    <script src="./libs/quicksettings.min.js"></script>
--->
+    <script src="https://cdn.jsdelivr.net/quicksettings/latest/quicksettings.min.js"></script> 
+
     <script>
 
 function position() {
@@ -46,7 +46,7 @@ function position() {
          .use("nod",mec.B)
             .label("B","nw")
         if (-(mec.phi_1-mec.phi)>0.5/180*pi) {
-             g.avec(mec.A0, 0.2*mec.a, mec.phi_1, -(mec.phi_1-mec.phi), {ls:"rgba(255, 177, 50, 0.8)"})
+             g.avec(mec.A0, 0.25*mec.a, mec.phi_1, -(mec.phi_1-mec.phi), {ls:"rgba(255, 177, 50, 0.8)"})
                 .label(`${+((mec.phi-mec.phi_1)*180/pi).toFixed(2)}°`,"mid","right")
         }
         if (-(mec.psi_1-mec.psi)>0.5/180*pi) {
@@ -85,11 +85,11 @@ function construct() {
                             .label("A3","end","left")
                         .use("nod",mec.A2)
                         .use("nod",mec.A3)
-                        .beg({foz:"10", foc:"papayawhip"})
+                        .beg({foz:"12", foc:"papayawhip"})
                             .avec(mec.A0, 0.2*mec.a, mec.phi_1, mec.phi_i[0], {ls:"rgba(255, 177, 50, 0.8)"})
                                 .label("φ12","mid","right")
                             .avec(mec.A0, 0.3*mec.a, mec.phi_1, mec.phi_i[1], {ls:"rgba(255, 177, 50, 0.8)"})
-                                .label("φ12","mid","right")
+                                .label("φ13","mid","right")
                         .end()
         }
 
@@ -107,7 +107,7 @@ function construct() {
                            .label("A31","end","left")
                         .use("nod",mec.A21)
                         .use("nod",mec.A31)
-                        .beg({foz:"10", foc:"papayawhip"})
+                        .beg({foz:"12", foc:"papayawhip"})
                             .avec(mec.B0, (mec.lenB0A2<mec.lenB0A3)?0.3*mec.lenB0A2:0.3*mec.lenB0A3, mec.psiB0A2, -mec.psi_i[0], {ls:"rgba(255, 177, 50, 0.8)"})
                                 .label("- ψ12","mid","right")
                             .avec(mec.B0, (mec.lenB0A2<mec.lenB0A3)?0.5*mec.lenB0A2:0.5*mec.lenB0A3, mec.psiB0A3, -mec.psi_i[1], {ls:"rgba(255, 177, 50, 0.8)"})
@@ -117,7 +117,7 @@ function construct() {
 
         // Schritt 5
         if(mec.step >= 5) {
-            construction.ply([mec.A1, mec.A21, mec.A31], false, {ls:"rgba(255, 255, 255, 0.8)", fs:"transparent"}) // falls hier nich fs auf transparent, werden die plys größenänderung des fensters gefüllt....
+            construction.ply([mec.A1, mec.A21, mec.A31], false, {ls:"rgba(255, 255, 255, 0.8)", fs:"transparent"})
                         .ply([mec.midA1A21, mec.B1, mec.midA21A31], false, {ld:"@dot", ls:"rgba(255, 255, 255, 0.9)", fs:"transparent"})
                         .beg({x: mec.midA1A21.x, y: mec.midA1A21.y, w:pi+mec.psiA1A21})
                             .rec(0, 0, 6, 6, {lw:2, ls:"rgba(126, 126, 118, 0.9)", fs:"rgba(255, 255, 255, 0.6)"})
@@ -128,29 +128,9 @@ function construct() {
                         .use("nod",mec.B1)
                            .label("B1","nw")
         }
-
-    // render
     construction.exe(ctx2);
 
 }
-
-// function angles() {
-//     // if (init) {
-//         var xOff = 0.4*width, // (width - 400)/2
-//             yOff = 0.3*height; // (height - 360)/2
-
-//         angl.del().clr().cartesian().style({ls:"papayawhip", ld:"@dashdot", foc:"papayawhip"})
-
-//         for (var i = 0; i < 2; i++) {
-//             angl.lin(xOff + mec.A0.x, yOff + mec.A0.y, xOff + mec.d2*Math.cos(mec.phi_i[i]), yOff + mec.d2*Math.sin(mec.phi_i[i])).label(`\u03C6${i+1}`,`end`,`right`)
-//                 .lin(xOff + mec.B0.x, yOff + mec.B0.y, xOff + mec.B0.x + mec.d2*Math.cos(mec.psi_i[i]), yOff + mec.B0.y + mec.d2*Math.sin(mec.psi_i[i])).label(`\u03C8${i+1}`,`end`,`right`)
-//             console.log(`phi${i+1} = ${mec.phi_i[i]*180/pi}, psi${i+1} = ${mec.psi_i[i]*180/pi}`)
-//         }
-
-//         angl.exe(ctx2)
-//     // }
-// }
-
 
 function render() {
     if (dirty) {
@@ -189,8 +169,8 @@ function evaluate() {
 
     panel.setValue("φ", Math.round(mec.phi_1*180/pi));
 
-    mec.b = mec.lenb;//.toFixed(2);
-    mec.c = mec.lenc;//.toFixed(2);
+    mec.b = mec.lenb;
+    mec.c = mec.lenc;
 
     mec.psi_1 = getPsi(mec.phi_1);
 
@@ -203,9 +183,7 @@ function evaluate() {
 
 function changePsis() {
     for (var i = 0; i < 3; i++) {
-        // console.log(`vorher: mec.psi_[${i+1}] = ${mec.psi_i[i]}, mec.alpha = ${mec.alpha} `);
         mec.psi_i[i] -= mec.alpha;
-        // console.log(`nachher: mec.psi_[${i+1}] = ${mec.psi_i[i]}`);
     }
 }
 
@@ -272,11 +250,6 @@ var cnv = document.getElementById('c'),
             return Math.atan2(vec.y,vec.x);
         },
 
-        // get deltaPsi() {
-        //     // return Math.max(...mec.psi_i) - Math.min(...mec.psi_i);
-        //     return mec.psi_i[1] - mec.psi_i[0];
-        // },
-
         get A21() {
             return {x: this.B0.x + this.lenB0A2*Math.cos(mec.psiB0A2 - mec.psi_i[0]),
                     y: this.B0.y + this.lenB0A2*Math.sin(mec.psiB0A2 - mec.psi_i[0])};
@@ -300,13 +273,11 @@ var cnv = document.getElementById('c'),
             var vec = v2.dif(mec.A21, mec.A1);
             return Math.atan2(vec.y,vec.x);
         },
-        // gerade a121 = A1 + 0.5*lenA1A21 + largeNum* ~eA1A21
 
         get psiA21A31() {
             var vec = v2.dif(mec.A31, mec.A21);
             return Math.atan2(vec.y,vec.x);
         },
-        // gerade A2121 = A21 + 0.5*lenA21A31 + largeNum* ~eA21A31
 
         get eA1A21() {
             return {x: Math.cos(mec.psiA1A21),
@@ -327,7 +298,7 @@ var cnv = document.getElementById('c'),
         },
 
         get B1() {
-            var P1 =  v2.isum(v2.iscl(v2.tilde(mec.eA1A21), -mec.largeNum) ,mec.midA1A21),   //   {x:mec.A1.x + 0.5*mec.lenA1A21*mec.eA1A21.x, y:mec.A1.y + 0.5*mec.lenA1A21*eA1A21.y},
+            var P1 =  v2.isum(v2.iscl(v2.tilde(mec.eA1A21), -mec.largeNum) ,mec.midA1A21),
                 P2 =  v2.isum(v2.iscl(v2.tilde(mec.eA1A21), mec.largeNum) ,mec.midA1A21),
                 P3 =  v2.isum(v2.iscl(v2.tilde(mec.eA21A31), -mec.largeNum) ,mec.midA21A31),
                 P4 =  v2.isum(v2.iscl(v2.tilde(mec.eA21A31), mec.largeNum) ,mec.midA21A31),
@@ -442,8 +413,8 @@ var cnv = document.getElementById('c'),
 
              .addBoolean("Mechanismus sichtbar", false, function() {dirty = true;})
 
-             .addNumber("a", 0, 500, mec.a, 1, function(value) { mec.a = value; /*angles();*/ dirty = true; evaluated = false; evaluate(); construct();})
-             .addNumber("d", 0, 500, mec.d, 1, function(value) { mec.d = value; /*angles();*/ dirty = true; evaluated = false; evaluate(); construct();})
+             .addNumber("a", 0, 500, mec.a, 1, function(value) { mec.a = value;  dirty = true; evaluated = false; evaluate(); construct();})
+             .addNumber("d", 0, 500, mec.d, 1, function(value) { mec.d = value;  dirty = true; evaluated = false; evaluate(); construct();})
 
              .addButton("Montagerichtung umkehren", function(value) { mec.assembly *= -1; mec.psi_1 = getPsi(mec.phi_1); dirty = true;})
 
@@ -451,31 +422,14 @@ var cnv = document.getElementById('c'),
              .addTextArea("aktueller Schritt:")
              .setTextAreaRows("Gliedlängen:", 1)
              .setTextAreaRows("aktueller Schritt:", 6)
-            //  .saveInLocalStorage("roberts")
-            //  .addButton("reset", function() {panel.setValuesFromJSON(defaultValues);})
     ,
-
-    // panel2 = QuickSettings.create(width - 210, 335, "Output")
-    //          .addTextArea("aktueller Schritt:")
-    //          .setWidth(200)
-    // ,
 
     panel3 = QuickSettings.create( width - 210, 10, "Winkelvorgaben")
              .addNumber("φ1", 0, 360, Math.round(mec.phi_1*180/pi), 1, function(value) { mec.phi_1 = value/180*pi; if (init) { construct(); dirty = true; evaluated = false; evaluate();}})
              .addNumber("φ12", 0, 360, Math.round(mec.phi_i[0]*180/pi), 1, function(value) { mec.phi_i[0] = value/180*pi; if (init) { construct(); dirty = true; evaluated = false; evaluate();}})
              .addNumber("φ13", 0, 360, Math.round(mec.phi_i[1]*180/pi), "any", function(value) { mec.phi_i[1] = value/180*pi; if (init) { construct(); dirty = true; evaluated = false; evaluate();}})
-            //  .addNumber("φ3", 0, 360, Math.round(mec.phi_i[2]*180/pi), 1, function(value) { mec.phi_i[2] = value/180*pi; if (init) { angles(); dirty = true; evaluated = false;}})
              .addNumber("ψ12", 0, 360, Math.round(mec.psi_i[0]*180/pi), 1, function(value) { mec.psi_i[0] = value/180*pi; if (init) { construct(); dirty = true; evaluated = false; evaluate();}})
              .addNumber("ψ13", 0, 360, Math.round(mec.psi_i[1]*180/pi), "any", function(value) { mec.psi_i[1] = value/180*pi; if (init) { construct(); dirty = true; evaluated = false; evaluate();}})
-            //  .addNumber("ψ3", 0, 360, Math.round(mec.psi_i[2]*180/pi), 1, function(value) { mec.psi_i[2] = value/180*pi; if (init) { angles(); dirty = true; evaluated = false;}})
-
-            //  .addButton("evaluieren", function(value) {evaluate();})
-
-            //  .saveInLocalStorage("freudensteinv2") // flush storage or rename after changes in panel-elements
-            //  .addButton("reset", function() {panel3.setValuesFromJSON(defaultValuesPanel3);})
-//    ,
-
-//    defaultValuesPanel3 = panel3.getValuesAsJSON()
 ;
 
 
@@ -485,11 +439,9 @@ var cnv = document.getElementById('c'),
  */
 
 window.onresize = function() {
-    // cancelAnimationFrame(requestAnimationFrame(render));
     width = cnv.width = cnv2.width = window.innerWidth;
     height = cnv.height = cnv2.height = window.innerHeight;
 
-    // panel2.setPosition( width - 210, 335);
     panel3.setPosition( width - 210, 10);
 
     construction = g2().pan(0.4*width, 0.3*height);
@@ -515,10 +467,9 @@ window.onresize = function() {
 if (panel._content.clientHeight > (height - 20)) panel.setHeight(height-20);  // resize qs panel if necessary
 if (panel3._content.clientHeight > (height - 20)) panel.setHeight(height-20);  // resize qs panel if necessary
 g2.State.linkfill = "transparent";
-// panel.setTextAreaRows("Gliedlängen:", 2);
 updateStep();
 evaluate();
-init = true;  // allows angles() to work after all inputs have been added
+init = true;
 render();
 
     </script>
