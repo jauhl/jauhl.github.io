@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <link href="https://gitcdn.xyz/repo/goessner/CodeMirror/master/theme/fh-do.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/codemirror/4.5.0/codemirror.css" rel="stylesheet" />
+</head>
+
+<body>
+  <canvas id="canvas" width="200" height="200" class="playable-canvas"></canvas>
+  <div class="playable-buttons">
+    <input id="edit" type="button" value="Edit" />
+    <input id="reset" type="button" value="Reset" />
+  </div>
+  <textarea id="code" class="playable-code">
+g2().cartesian()
+    .p()               // begin path
+    .m(20,180)         // move to point
+    .q(100,10,180,180) // quadratic bezier curve segment
+    .stroke()
+    .exe(ctx)</textarea>
+
+  <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
+  <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/codemirror/4.5.0/codemirror.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/codemirror/4.5.0/mode/javascript/javascript.js"></script>
+  <script>
+
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+var reset = document.getElementById("reset");
+var edit = document.getElementById("edit");
+var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+  mode:  "javascript",
+  lineNumbers: true,
+  theme: "fh-do",
+  styleActiveLine: true,
+  matchBrackets: true,
+});
+var code = editor.getValue();
+
+function drawCanvas() {
+  g2().del().clr().exe(ctx);
+  eval(editor.getValue());
+}
+
+reset.addEventListener("click", function() {
+  editor.setValue(code);
+  drawCanvas();
+});
+
+edit.addEventListener("click", function() {
+  editor.focus();
+})
+
+window.addEventListener("load", drawCanvas);
+
+editor.on('change', function (editor) {
+  drawCanvas();
+});
+
+</script>
+</body>
+
+</html>
