@@ -1,0 +1,179 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Kniehebelmechanismus Arburg A221m</title>      
+</head>
+
+<body>
+    <h2>Kniehebelmechanismus Arburg A221m</h2>             
+    <canvas id="c1" width="600" height="400" style="border-width:1px;border-style:solid"></canvas>
+    <br>
+    <label for="sslider">s:
+    <input type="range" id="sslider" style="width:550px;vertical-align:middle;padding:0" min="50" max="200" value="125">
+    <output id="sout" for="sslider">50</output><span id="mm"> mm</span>
+    </label>
+    <br><br>
+    F1 = <input type="number" id="F1" value="100"> N
+    <!--F1 = <span id="F1">100</span><span id="N1"> N</span>-->
+    <br>
+    F2 = <span id="F2">0</span><span id="N2"> N</span><br><br>
+    Kurbellänge = <input type="number" id="a" value="50"> mm<br>
+    Koppellänge = <input type="number" id="b" value="100"> mm<br><br>
+    <canvas id="c2" width="500" height="300" style="border-width:1px;border-style:solid"></canvas>
+
+    
+     
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>    
+    <script src="https://gitcdn.xyz/repo/goessner/g2-chart/master/g2.chart.min.js"></script>
+
+    <script>
+
+const pi = Math.PI;
+
+let cnv = document.getElementById('c1'),
+    ctx = cnv.getContext('2d'),
+    cnv2 = document.getElementById('c2'),
+    ctx2 = cnv2.getContext('2d'),
+    sslider = document.getElementById('sslider'),
+    sout = document.getElementById('sout')
+    F2out = document.getElementById('F2'),
+    F1input = document.getElementById('F1'),
+    ainput = document.getElementById('a'),
+    binput = document.getElementById('b'),
+
+    s = 125, // Laufvariable
+
+    mec = {
+        a:50,
+        b:100,
+        F1:100, // in
+        get F2() {return this.F1*(Math.cos(this.phi)/( Math.tan(pi - this.theta)*Math.cos(this.phi) + Math.sin(this.phi) ))},   // out
+        forces: [],
+        get phi() {
+            let lambda = 0.5*((this.a*this.a - this.b*this.b)/(s*s) + 1),
+                mue = Math.sqrt((this.a*this.a)/(s*s) - lambda*lambda);
+            return Math.atan2( (1/this.a)*(mue*s), (1/this.a)*(lambda*s) )
+        },
+        get ephi() { return { x:Math.cos(this.phi), y:Math.sin(this.phi)}; },
+        get theta() { // zwischen x-Achse und Koppel mathem. positiv!
+            let ephi = this.ephi;
+            return Math.atan2( (1/this.b)*(this.a*ephi.y), (1/this.b)*(this.b*ephi.x - s) )
+        },
+        get etheta() { return { x:Math.cos(this.psi), y:Math.sin(this.psi)}; },
+
+        // Gelenkpunkte
+        A0: {x:0, y:0},
+        get A() { return {x:this.A0.x + this.a*this.ephi.x, y:this.A0.y + this.a*this.ephi.y}; },
+        get B() { return {x:s, y:this.A0.y}; }
+    },  
+ 
+    g = g2(),
+
+    world = g2().clr().cartesian()
+                .pan(150, 150)
+                .use(g)
+                .use("nodfix"),
+
+    dirty = true
+    ;
+
+function position() {
+    g.del().clr()
+     .bar2(mec.A0, mec.A)
+     .bar2(mec.A, mec.B)
+     .slider(mec.B)
+     .use("nod",mec.A)
+     .use("nod",mec.B)
+     .vec({x:mec.A.x, y:mec.A.y + 50}, {dx:0, dy:-45}).label("F1")
+     .vec({x:mec.B.x + 65, y:0}, {dx:-50, dy:0}).label("F2")
+}        
+
+function render() {
+    if (dirty) {
+        position();
+        world.exe(ctx);
+        dirty = false;
+    }
+    requestAnimationFrame(render);
+}
+
+function sets() {
+    if (sslider.value != sout.value) {
+        s = +sslider.value;
+        if ((s + 0.1) <= (mec.a + mec.b) && (mec.phi<pi/2)) {
+            sout.innerHTML = sslider.value;
+            sout.style["color"] = "black";
+            F2out.innerHTML = mec.F2.toFixed(2);
+            mm.hidden = false;
+            dirty = true;
+        } else {
+            sout.style["color"] = "red";
+            sout.innerHTML = "unzulaessiger Bereich";
+            mm.hidden = true;
+        }
+    }
+}
+
+function setF1() {
+        mec.F1 = +F1input.value;
+}
+
+function getForces() {
+    mec.forces = [];
+
+    let saveds = s;
+        min = +sslider.min,
+        max = +sslider.max;
+
+    for (s=min; s<max; s+=1) {
+        if (mec.theta > pi/2 && mec.theta < pi)
+        mec.forces.push(+s.toFixed(2), +mec.F2.toFixed(2));
+    }
+    s = saveds;
+
+    plotForceGraph();
+}
+
+function plotForceGraph() {
+  g2().cartesian().clr().del().rec(0, 0, cnv2.width, cnv2.height, {fs:"rgba(238, 238, 238, 1)"} )
+      .chart({ x:35,y:35,b:350,h:230,
+               title:{ text:"Kraftverlauf"},
+               funcs:[
+                   { data:mec.forces, 
+                     fill:false
+                   }],
+               xaxis: {
+                   title:"Schließweg [mm]",
+                   grid:true
+               },
+               yaxis: {
+                   title:"Schließkraft [N]",
+                   grid:true,
+                   origin:true
+               }
+            })
+      .exe(ctx2);
+}  
+
+/*
+ *  Initialisierung
+ */
+
+// Eventlistener hinzufuegen
+sslider.addEventListener("input",sets);
+F1input.addEventListener("input",function() {mec.F1 = +F1input.value; getForces();});
+ainput.addEventListener("input",function() {mec.a = +ainput.value; getForces(); dirty = true;});
+binput.addEventListener("input",function() {mec.b = +binput.value; getForces(); dirty = true;});
+
+sets();
+getForces()
+
+// Animation starten
+render();
+
+
+    </script>
+</body>
+</html>
