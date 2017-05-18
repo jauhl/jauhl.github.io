@@ -10,16 +10,16 @@
     <canvas id="c1" width="600" height="400" style="border-width:1px;border-style:solid"></canvas>
     <br>
     <label for="sslider">s:
-    <input type="range" id="sslider" style="width:550px;vertical-align:middle;padding:0" min="50" max="200" value="125">
+    <input type="range" id="sslider" style="width:550px;vertical-align:middle;padding:0" min="240" max="400" value="125">
     <output id="sout" for="sslider">50</output><span id="mm"> mm</span>
     </label>
     <br><br>
-    F1 = <input type="number" id="F1" value="100"> N
+    F1 = <input type="number" id="F1" value="5000"> N
     <!--F1 = <span id="F1">100</span><span id="N1"> N</span>-->
     <br>
     F2 = <span id="F2">0</span><span id="N2"> N</span><br><br>
-    Kurbellänge = <input type="number" id="a" value="50"> mm<br>
-    Koppellänge = <input type="number" id="b" value="100"> mm<br><br>
+    Kurbellänge = <input type="number" id="a" value="200"> mm<br>
+    Koppellänge = <input type="number" id="b" value="200"> mm<br><br>
     <canvas id="c2" width="500" height="300" style="border-width:1px;border-style:solid"></canvas>
 
     
@@ -46,9 +46,9 @@ let cnv = document.getElementById('c1'),
     s = 125, // Laufvariable
 
     mec = {
-        a:50,
-        b:100,
-        F1:100, // in
+        a:200,
+        b:200,
+        F1:5000, // in
         get F2() {return this.F1*(Math.cos(this.phi)/( Math.tan(pi - this.theta)*Math.cos(this.phi) + Math.sin(this.phi) ))},   // out
         forces: [],
         get phi() {
@@ -72,7 +72,7 @@ let cnv = document.getElementById('c1'),
     g = g2(),
 
     world = g2().clr().cartesian()
-                .pan(150, 150)
+                .pan(100, 150)
                 .use(g)
                 .use("nodfix"),
 
