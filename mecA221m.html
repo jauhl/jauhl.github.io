@@ -14,10 +14,10 @@
     <output id="sout" for="sslider">50</output><span id="mm"> mm</span>
     </label>
     <br><br>
-    Hydraulikkraft = <input type="number" id="F1" value="5000"> N
+    Hydraulikkraft = <input type="number" id="F1" value="35" step="any"> kN
     <!--F1 = <span id="F1">100</span><span id="N1"> N</span>-->
     <br>
-    Schließkraft F = <span id="F2">0</span><span id="N2"> N</span><br><br>
+    Schließkraft F = <span id="F2">0</span><span id="N2"> kN</span><br><br>
     <!--Kurbellänge = <input type="number" id="a" value="200"> mm<br>
     Koppellänge = <input type="number" id="b" value="200"> mm<br><br>-->
     <canvas id="c2" width="500" height="300" style="border-width:1px;border-style:solid"></canvas>
@@ -30,7 +30,9 @@
 
     <script>
 
-var cnv = document.getElementById('c1'),
+const pi = Math.PI;
+
+let cnv = document.getElementById('c1'),
     ctx = cnv.getContext('2d'),
     cnv2 = document.getElementById('c2'),
     ctx2 = cnv2.getContext('2d'),
@@ -41,38 +43,36 @@ var cnv = document.getElementById('c1'),
     ainput = document.getElementById('a'),
     binput = document.getElementById('b'),
 
-    s = 125, // Laufvariable
-
-    pi = Math.PI,
+    s = 125, // Laufletiable
 
     mec = {
         a:200,
         b:200,
         c:250,
         d:250,
-        F1:-5000, // in
+        F1:-35, // in, - weil anders als dargestellt freigeschnitten
         get F2() {return this.F1*(Math.cos(this.phi)/( Math.tan(pi - this.theta)*Math.cos(this.phi) + Math.sin(this.phi) ))},   // out
         forces: [],
         get phi() {
-            var lambda = 0.5*((this.a*this.a - this.b*this.b)/(s*s) + 1),
+            let lambda = 0.5*((this.a*this.a - this.b*this.b)/(s*s) + 1),
                 mue = -Math.sqrt((this.a*this.a)/(s*s) - lambda*lambda);
             return Math.atan2( (1/this.a)*(mue*s), (1/this.a)*(lambda*s) )
         },
         get ephi() { return { x:Math.cos(this.phi), y:Math.sin(this.phi)}; },
         get theta() { // zwischen x-Achse und Koppel mathem. positiv!
-            var ephi = this.ephi;
+            let ephi = this.ephi;
             return Math.atan2( (1/this.b)*(this.a*ephi.y), (1/this.b)*(this.b*ephi.x - s) )
         },
         get etheta() { return { x:Math.cos(this.psi), y:Math.sin(this.psi)}; },
 
         get phi2() {
-            var lambda = 0.5*((this.c*this.c - this.d*this.d)/(s*s) + 1),
+            let lambda = 0.5*((this.c*this.c - this.d*this.d)/(s*s) + 1),
                 mue = -Math.sqrt((this.c*this.c)/(s*s) - lambda*lambda);
             return Math.atan2( (1/this.c)*(mue*s), (1/this.c)*(lambda*s) )
         },
         get ephi2() { return { x:Math.cos(this.phi2), y:Math.sin(this.phi2)}; },
         get theta2() { // zwischen x-Achse und Koppel mathem. positiv!
-            var ephi2 = this.ephi2;
+            let ephi2 = this.ephi2;
             return Math.atan2( (1/this.d)*(this.c*ephi2.y), (1/this.d)*(this.d*ephi2.x - s) )
         },
         get etheta2() { return { x:Math.cos(this.theta2), y:Math.sin(this.theta2)}; },
@@ -90,6 +90,8 @@ var cnv = document.getElementById('c1'),
                 .pan(100, 250)
                 .use(g)
                 .use("nodfix"),
+    
+    gmrk = g2(),
 
     dirty = true
     ;
@@ -140,7 +142,7 @@ function sets() {
 function getForces() {
     mec.forces = [];
 
-    var saveds = s,
+    let saveds = s,
         min = +sslider.min,
         max = +sslider.max;
 
@@ -166,7 +168,7 @@ function plotForceGraph() {
                    grid:true
                },
                yaxis: {
-                   title:"Schließkraft [N]",
+                   title:"Schließkraft [kN]",
                    grid:true,
                    origin:true
                }
