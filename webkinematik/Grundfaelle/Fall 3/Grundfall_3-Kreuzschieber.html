@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Kreuzschieber</title>      
+</head>
+
+<body>
+    <h2>Kreuzschieber - Grundfall 3</h2>             
+    <canvas id="c" width="450" height="300" style="border-width:1px;border-style:solid"></canvas>
+    <br>
+    <label for="s1slider">s1:
+    <input type="range" id="s1slider" style="width:380px;vertical-align:middle;padding:0" min="-150" max="190" value="0">
+    <output id="s1out" for="s1slider">0</output>mm
+    </label>
+     
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>    
+
+    <script>
+
+var cnv = document.getElementById('c'),
+    ctx = cnv.getContext('2d'),
+    s1slider = document.getElementById('s1slider'),
+    s1out = document.getElementById('s1out'), 
+
+    pi = Math.PI,
+
+    s1 = 0, // Laufvariable
+
+    mec = {
+        l: 100,
+        alpha: 30*pi/180,
+        get g() { return {x:s1, y:0}; },
+        get e2() { return {x:Math.cos(pi - this.alpha), y:Math.sin(pi - this.alpha)} },
+        get s2() { var ge2  = this.g.x*this.e2.x + this.g.y*this.e2.y,
+                       ge2g = (this.g.x*(-this.e2.y) + this.g.y*this.e2.x); 
+                   return ge2 + Math.sqrt( this.l*this.l - ge2g*ge2g ); },
+
+        // eigentlich nicht benoetigt           
+        get phi() { return Math.atan2( (1/this.l)*this.s2*this.e2.y, (1/this.l)*this.s2*(this.e2.x - s1) ); },     
+        get ephi() { return {x:Math.cos(this.phi), y:Math.sin(this.phi)}; },
+
+        // Gelenkpunkte
+        get A() { return {x:s1, y:0}; },
+        get B() { var s2 = this.s2; return {x:s2*this.e2.x, y:s2*this.e2.y}; }
+    },  
+ 
+    g = g2(),
+
+    // baut und initialisiert statische Umgebung
+    world = g2().clr().cartesian()
+                .pan(220, 150) // Nullpunkt verschoben   
+                .beg({ld:[1,5,15,5], ls:"grey", lw:2})
+                    .lin(-300,0,300,0)
+                    .lin(300*mec.ephi.x, 300*mec.ephi.y, -300*mec.ephi.x, -300*mec.ephi.y)  // geht nur weil Initialzustand phi == alpha
+                .end()
+                .use(g),
+
+    dirty = true  // wenn true gibt es was zu aktualisieren
+    ;
+
+function position() {
+    g.del()
+     .slider({x:mec.A.x, y:mec.A.y}, 0, {fs:"@nodfill"})
+     .slider({x:mec.B.x, y:mec.B.y}, -mec.alpha, {fs:"@nodfill"})  
+     .lin(mec.A.x, mec.A.y, mec.B.x, mec.B.y, {lw:3})
+     .use("nod",{x:mec.A.x, y:mec.A.y})
+     .use("nod",{x:mec.B.x, y:mec.B.y})
+}        
+
+function render() {
+    if (dirty) {
+        position();  // aktualisiere Position
+        world.exe(ctx);  // rendert world in den Context
+        dirty = false;
+    }
+    requestAnimationFrame(render);  // asynchroner callback von render(), keine Rekursion!
+}
+
+function sets1() {
+    if (s1slider.value != s1out.value) {
+        s1 = s1slider.value;
+        s1out.innerHTML = s1slider.value;
+        dirty = true;
+    }
+}
+
+/*
+ *  Initialisierung
+ */
+
+// Eventlistener hinzufuegen
+s1slider.addEventListener("input",sets1);
+
+// Animation starten
+render();
+
+    </script>
+</body>
+</html>

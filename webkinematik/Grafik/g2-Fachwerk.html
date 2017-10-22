@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+</head>
+
+<body>
+  <canvas id="c" width="801" height="501" style="border: 1px solid #4D4E53;border-radius: 2px;"></canvas>
+  <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
+  <script>
+
+var ctx = document.getElementById("c").getContext("2d"),
+    g = g2(),
+    nod = g2().cir(0, 0, 5, {ls:"#4f4f4f" ,fs:"#d0d0d0"}),
+    nodfix = g2().ply([-10,-15,0,0,10,-15], false, {ls:"#4f4f4f" ,fs:"#c7c7c7"}).cir(0, 0, 5, {ls:"#4f4f4f" ,fs:"#d0d0d0"}),
+    nodflt = g2().ply([-10,-15,0,0,10,-15], true, {ls:"#4f4f4f" ,fs:"#c7c7c7"}).lin(-11, -20, 11, -20, {ls:"#747474", lw:5}).cir(0, 0, 5, {ls:"#4f4f4f" ,fs:"#d0d0d0"})
+;
+    
+g2.symbol.arrow = g2().ply([50,0, 10,0, 10,3, 5,0, 10,-3, 10,0], true, {ls:"crimson" ,fs:"crimson", lw:3});
+
+g.cartesian().grid()
+ .pan(240, 200)
+ .ply([0,0,300,0,200,100,0,100],true,{ls:"#747474" , lw:5, lj:"round"})
+ .ply([0,0,100,100,100,0,200,100,200,0],false,{ls:"#747474" , lw:5, lj:"round"})
+ .use("arrow", {x:200, y:100})
+ .use("arrow", {x:100, y:100, w:Math.PI/2})
+ .use("arrow", {x:300, y:-50, w:Math.PI/2}) 
+ .use(nod, {x:100, y:0})
+ .use(nod, {x:200, y:0})
+ .use(nod, {x:300, y:0})
+ .use(nod, {x:100, y:100})
+ .use(nod, {x:200, y:100})
+ .use(nodfix, {x:0, y:0}).txt("A",-20,0)
+ .use(nodflt, {x:0, y:100, w:-Math.PI/2}).txt("B",0,120) 
+ .exe(ctx)    
+
+  </script>
+</body>
+</html>
