@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PWA test</title>
+    <link rel="canonical" href="https://jauhl.github.io/PWA/" />
+    <style type="text/css">
+     html,
+        body {
+            margin: 0px;
+        }
+
+        canvas {
+            display: block;
+            /*keine scrollbars*/
+        }
+
+        #fps-counter {
+            position: absolute;
+            bottom: 8px;
+            right: 16px;
+            color: white;
+        }
+    *{
+      background-color: #F5F4F0;
+      font-family: Georgia, serif;
+    }
+    </style>
+</head>
+<body>
+    <canvas id="c"></canvas>
+    <div id="fps-counter">FPS</div>
+
+    <script src="g2.min.js"></script>
+    <script src="g2.mec.min.js"></script>
+    <script src="v2.min.js"></script>
+    <script src="quicksettings.min.js"></script>
+  <script>
+  // register ServiceWorker, remember to use absolute path!
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.register('https://jauhl.github.io/PWA/sw.js', {scope: 'https://jauhl.github.io/PWA/'})
+  }
+  
+  // --- Application code here ---
+
+  function position() {
+            g.del().style({ foc: "white", foz: 12 })
+                .bar2(mec.A0, mec.A)
+                .bar2(mec.B0, mec.B)
+                .bar2(mec.A, mec.B)
+                .use("nod", mec.A).label("A", "nw")
+                .use("nod", mec.B).label("B", "ne")
+                .use("gnd", mec.B0).label("B0", "se")
+
+            if (panel.getValue("Wendekreis anzeigen"))
+                g.cir(mec.center.x, mec.center.y, mec.radius, { ls: "orange" })
+
+            if (panel.getValue("Tangentialkreis anzeigen"))
+                g.cir(mec.centerTan.x, mec.centerTan.y, mec.radiusTan, { ls: "orange" })
+
+            if (panel.getValue("Kreise 2. Ordnung anzeigen"))
+                g.cir(mec.centerW2.x, mec.centerW2.y, mec.radiusW2, { ls: "lavender" })
+                    .cir(mec.centerTan2.x, mec.centerTan2.y, mec.radiusTan2, { ls: "lavender" })
+
+            if (panel.getValue("alt. Wendekreis anzeigen"))
+                g.cir(mec.centeralt.x, mec.centeralt.y, mec.radiusalt, { ls: "rgba(129, 165, 148, 1)" }) // alternativer Wendekreis
+
+            if (panel.getValue("Pole anzeigen"))
+                g.use(pol2, mec.Walt).label("W", "se")
+                    .use(pol2, mec.P).label("P", "se")
+                    .use(pol2, v2.sum(mec.P, mec.rPT)).label("T", "se")
+                    .use(pol2, v2.sum(mec.P, mec.rPQ)).label("Q", "se")
+                    .use(pol3, v2.sum(mec.P, mec.rPW2)).label("W2", "se")
+                    .use(pol3, v2.sum(mec.P, mec.rPT2)).label("T2", "se")
+                    .use(pol3, v2.sum(mec.P, mec.rPJ)).label("J", "se")
+                    .use(pol3, v2.sum(mec.P, mec.rPU)).label("U", "se")
+            //  .vec(v2.sum(mec.P,mec.rPW2), {dx:mec.rW2T2.x,dy:mec.rW2T2.y})
+
+
+            // Schritt 1
+            if (mec.step >= 1) {
+                g.use("pol", mec.P).label("P", "n")
+                    .lin(mec.A0.x - 2 * width * mec.ephi.x, mec.A0.y - 2 * width * mec.ephi.y, mec.A0.x + 2 * width * mec.ephi.x, mec.A0.y + 2 * width * mec.ephi.y, { ld: "@dashdot", ls: "rgba(255, 255, 255, 0.5)" })
+                    .lin(mec.B0.x - 2 * width * mec.epsi.x, mec.B0.y - 2 * width * mec.epsi.y, mec.B0.x + 2 * width * mec.epsi.x, mec.B0.y + 2 * width * mec.epsi.y, { ld: "@dashdot", ls: "rgba(255, 255, 255, 0.5)" })
+            }
+
+            // Schritt 2
+            if (mec.step >= 2) {
+                g.use("nod", mec.I).label("I", "se")
+                    .lin(mec.A.x - 2 * width * mec.etheta.x, mec.A.y - 2 * width * mec.etheta.y, mec.A.x + 2 * width * mec.etheta.x, mec.A.y + 2 * width * mec.etheta.y, { ld: "@dash", ls: "rgba(255, 255, 255, 0.5)" })
+                if (mec.I.x < mec.A0.x || mec.I.x > mec.B0.x) {
+                    g.lin(mec.B0.x, mec.B0.y, mec.I.x, mec.I.y, { ld: "@dash", ls: "rgba(255, 255, 255, 0.5)" })
+                } else {
+                    g.lin(mec.B0.x, mec.B0.y, mec.A0.x, mec.A0.y, { ld: "@dash", ls: "rgba(255, 255, 255, 0.5)" })
+                }
+            }
+
+            // Schritt 3
+            if (mec.step >= 3) {
+                g.lin(mec.I.x, mec.I.y, mec.P.x, mec.P.y, { ls: "rgba(255, 255, 255, 0.6)" }).mark("tick", 0.49).mark("tick", 0.51)
+            }
+
+            // Schritt 4
+            if (mec.step >= 4) {
+                g.use("nod", mec.K).label("K", "se")
+                    .lin(mec.P.x, mec.P.y, mec.K.x, mec.K.y, { ls: "rgba(255, 255, 255, 0.7)" }).mark("tick", 0.49).mark("tick", 0.51)
+            }
+
+            // Schritt 6
+            if (mec.step >= 6) {
+                g.use(pol, mec.Wnew).label("W", "se")
+                    .lin(mec.Aw.x, mec.Aw.y, mec.Wnew.x, mec.Wnew.y, { ld: "@dot", ls: "rgba(255, 255, 255, 0.9)" })
+                    .lin(mec.Bw.x, mec.Bw.y, mec.Wnew.x, mec.Wnew.y, { ld: "@dot", ls: "rgba(255, 255, 255, 0.9)" })
+                    .beg({ x: mec.Aw.x, y: mec.Aw.y, w: pi + Math.atan2(mec.e_A0A.y, mec.e_A0A.x) })
+                    .rec(0, 0, -8, 8, { lw: 2, ls: "rgba(126, 126, 118, 0.9)", fs: "rgba(255, 255, 255, 0.6)" })
+                    .end()
+                    .beg({ x: mec.Bw.x, y: mec.Bw.y, w: Math.atan2(mec.e_B0B.y, mec.e_B0B.x) })
+                    .rec(0, 0, 8, 8, { lw: 2, ls: "rgba(126, 126, 118, 0.9)", fs: "rgba(255, 255, 255, 0.6)" })
+                    .end()
+
+                if (panel.getValue("alt. Wendepol (Schritt 6)"))
+                    //    g.cir(mec.Walt.x, mec.Walt.y, 6, {fs:"red"}).label("Walt","se")  // alt. Wendepol (Schritt 6)
+                    //     .cir(mec.Walt.x, mec.Walt.y, 2.5, {fs:"black"})
+                    g.use(pol2, mec.Walt).label("Walt", "se")
+                //.dim(mec.Wnew, mec.Walt, {ls:"rgba(255, 255, 255, 0.9)"}).label(`${mec.WWaltLen.toFixed(2)}`, `mid`)
+            }
+
+            // Schritt 5
+            if (mec.step >= 5) {
+                // var pos = 0.5*norm(v2.len(v2.dif(mec.Bw, mec.K)), 0, v2.len(v2.dif(mec.Aw, mec.K))); // halbe normalisierte Position von Bw auf KAw
+                g.use("nod", mec.Aw).label("Aw", "se")
+                    .use("nod", mec.Bw).label("Bw", "se")
+                if (v2.len(v2.dif(mec.K, mec.Aw)) >= v2.len(v2.dif(mec.Bw, mec.Aw))) {
+                    g.lin(mec.K.x, mec.K.y, mec.Aw.x, mec.Aw.y, { ls: "rgba(255, 255, 255, 0.8)" }).mark("tick", 0.49).mark("tick", 0.51);
+                } else {
+                    g.lin(mec.Bw.x, mec.Bw.y, mec.Aw.x, mec.Aw.y, { ls: "rgba(255, 255, 255, 0.8)" }).mark("tick", 0.49).mark("tick", 0.51);
+                }
+            }
+
+
+        }
+        
+        const fpsCounter = document.getElementById("fps-counter"); // fps container
+        let then = performance.now(); // global var for time from last frame
+
+        function render(t) {
+            let now = t;  // get time in milliseconds
+
+            if (dirty) {
+                position();
+                world.exe(ctx);
+                dirty = false;
+            }
+
+            //compute time since last frame
+            let fps = 1000 / (now - then);
+            then = t;
+            fpsCounter.innerText = `FPS: ${fps.toFixed(2)}`;
+
+            requestAnimationFrame(render);
+        }
+
+        function updateOutput() {
+            panel2.setValue("aktueller Schritt:", steps[mec.step]);
+        }
+
+        function norm(value, min, max) {
+            return (value - min) / (max - min);
+        }
+
+        // cross product; takes objects with at least 2 dimensions and returns a 3d object
+        function cross(a, b) {
+            var az = (a.z != 0) ? (a.z || 1) : 0,
+                bz = (b.z != 0) ? (b.z || 1) : 0;
+
+            return { x: a.y * bz - az * b.y, y: az * b.x - a.x * bz, z: a.x * b.y - a.y * b.x };
+        }
+
+
+        var cnv = document.getElementById('c'),
+            ctx = cnv.getContext('2d'),
+            width = cnv.width = window.innerWidth,
+            height = cnv.height = window.innerHeight,
+
+            pi = Math.PI,
+
+            mec = {
+                phi: 90 * pi / 180,
+                a: 100,
+                b: 141,
+                c: 509,
+                d: 600,
+                e: 100,
+
+                step: 0,
+                largenNum: 999999999,
+                assembly: 1,  // direction of mec. assembly, found in mue of theta
+
+                //######################################################################
+                //#            Loesung
+                //######################################################################
+
+                // Schritt 1
+                get r() {
+                    var frac = this.ephi.y / this.ephi.x;
+                    return (this.A0.y - this.B0.y + (this.B0.x - this.A0.x) * (frac)) / (this.epsi.y - (frac * this.epsi.x));
+                },
+
+                get P() {
+                    return (v2.isum(v2.scl(this.epsi, this.r), this.B0));
+                },
+
+                // get P() {
+                //     return  {x: this.B0.x + this.r*this.epsi.x, y:this.B0.y + this.r*this.epsi.y};
+                // },
+
+                // Schritt 2
+                get k() {
+                    var frac = this.etheta.y / this.etheta.x;
+                    return (this.A.y - this.A0.y + (this.A0.x - this.A.x) * (frac)) / (this.ealpha.y - (frac * this.ealpha.x));
+                },
+
+                get I() {
+                    return (v2.isum(v2.scl(this.ealpha, this.k), this.A0));
+                },
+
+                // get I() {
+                //     return {x: this.A0.x + this.k*this.ealpha.x, y:this.A0.y + this.k*this.ealpha.y};
+                // },
+
+                // Schritt 4
+                get e_A0B0() {
+                    return (v2.iunit(v2.dif(this.B0, this.A0)));
+                },
+
+                get e_AB() {
+                    return (v2.iunit(v2.dif(this.B, this.A)));
+                },
+
+                get s() {
+                    var frac = this.e_A0B0.y / this.e_A0B0.x;
+                    return (this.P.y - this.A.y + (this.A.x - this.P.x) * frac) / (this.e_AB.y - (frac * this.e_AB.x));
+                },
+
+                get K() {
+                    return (v2.isum(v2.scl(this.e_AB, this.s), this.A));
+                },
+
+                // get K() {
+                //     return {x: this.A.x + this.s*this.e_AB.x, y:this.A.y + this.s*this.e_AB.y};
+                // },
+
+                // Schritt 5
+                get e_PI() {
+                    return (v2.iunit(v2.dif(this.I, this.P)));
+                },
+
+                get e_A0A() {
+                    return (v2.unit(this.A));
+                },
+
+                get e_B0B() {
+                    return (v2.iunit(v2.dif(this.B, this.B0)));
+                },
+
+                // numerisches Problem bei phi=0° und phi=360° (innere Steglage). frac sowie this.A0.y sind dort geometriebedingt 0. Als Folge wird durch 0 geteilt (verfahrensbedingt)
+                get t() {
+                    var frac = this.e_PI.y / this.e_PI.x;
+                    return (this.K.y - this.A0.y + (this.A0.x - this.K.x) * frac) / (this.e_A0A.y - (frac * this.e_A0A.x));
+                },
+
+                get Aw() {
+                    return (v2.isum(v2.scl(this.e_A0A, this.t), this.A0));
+                },
+
+                // get Aw() {
+                //     return {x: this.A0.x + this.t*this.e_A0A.x, y:this.A0.y + this.t*this.e_A0A.y};
+                // },
+
+                get u() {
+                    var frac = this.e_PI.y / this.e_PI.x;
+                    return (this.K.y - this.B0.y + (this.B0.x - this.K.x) * frac) / (this.e_B0B.y - (frac * this.e_B0B.x));
+                },
+
+                get Bw() {
+                    return (v2.isum(v2.scl(this.e_B0B, this.u), this.B0));
+                },
+
+                // get Bw() {
+                //     return {x: this.B0.x + this.u*this.e_B0B.x, y:this.B0.y + this.u*this.e_B0B.y};
+                // },
+
+                // Schritt 6
+                get v() {
+                    var frac = - mec.e_A0A.x / mec.e_A0A.y;
+                    return (mec.Aw.y - mec.Bw.y + (mec.Bw.x - mec.Aw.x) * frac) / (mec.e_B0B.x + (frac * mec.e_B0B.y));
+                },
+
+                get W() {
+                    return (v2.isum(v2.iscl(v2.tilde(mec.e_B0B), mec.v), mec.Bw));
+                },
+                /*
+                        get Wnew() {  // denpends on math.js
+                            var P1 =  v2.dif(mec.Aw,v2.iscl(v2.tilde(mec.e_A0A),-mec.largenNum)),
+                                P2 =  v2.dif(mec.Aw,v2.iscl(v2.tilde(mec.e_A0A),mec.largenNum)),
+                                P3 =  v2.dif(mec.Bw,v2.iscl(v2.tilde(mec.e_B0B),-mec.largenNum)),
+                                P4 =  v2.dif(mec.Bw,v2.iscl(v2.tilde(mec.e_B0B),mec.largenNum)),
+                                SP = math.cross(  math.cross([P1.x,P1.y,1],[P2.x,P2.y,1]),   math.cross([P3.x,P3.y,1],[P4.x,P4.y,1]) );
+                          //  console.log("SP_Wnew: " + SP);
+                            return {x: SP[0]/SP[2], y:SP[1]/SP[2]};
+                        },
+                */
+                get Wnew() {
+                    var P1 = v2.dif(mec.Aw, v2.iscl(v2.tilde(mec.e_A0A), -mec.largenNum)),
+                        P2 = v2.dif(mec.Aw, v2.iscl(v2.tilde(mec.e_A0A), mec.largenNum)),
+                        P3 = v2.dif(mec.Bw, v2.iscl(v2.tilde(mec.e_B0B), -mec.largenNum)),
+                        P4 = v2.dif(mec.Bw, v2.iscl(v2.tilde(mec.e_B0B), mec.largenNum)),
+                        SP = cross(cross(P1, P2), cross(P3, P4));
+                    SP;
+                    return { x: SP.x / SP.z, y: SP.y / SP.z };
+                },
+
+                // Wendekreis besser
+                get rPW() {
+                    return v2.dif(mec.W, mec.P);
+                },
+
+                get center() {
+                    return v2.isum(v2.scl(mec.rPW, 0.5), mec.P);
+                },
+
+                get radius() {
+                    return 0.5 * v2.len(mec.rPW);
+                },
+
+                //######################################################################
+                //#            alternativer Wendekreis
+                //######################################################################
+
+                get rPWalt() {
+                    return v2.dif(mec.Walt, mec.P);
+                },
+
+                get centeralt() {
+                    return v2.isum(v2.scl(mec.rPWalt, 0.5), mec.P);
+                },
+
+                get radiusalt() {
+                    return 0.5 * v2.len(mec.rPWalt);
+                },
+
+                //######################################################################
+                //#            Wendepol nach Gl. 9.5 (Goessner)
+                //######################################################################
+
+                get rPA() {
+                    return v2.dif(mec.A, mec.P); //x
+                },
+
+                get rPB() {
+                    return v2.dif(mec.B, mec.P); //x
+                },
+
+                get rBB0() {
+                    return v2.dif(mec.B0, mec.B); //x
+                },
+
+                get rAA0() {
+                    return v2.dif(mec.A0, mec.A); //x
+                },
+
+                get Walt() {  // = rAW
+                    var rPArPA = v2.dot(mec.rPA, mec.rPA), //x
+                        rPBrPB = v2.dot(mec.rPB, mec.rPB),
+                        frac = 1 / v2.perp(mec.rPA, mec.rPB),
+                        scalar1 = rPBrPB * ((rPBrPB / v2.dot(mec.rBB0, mec.rPB)) + 1),
+                        scalar2 = rPArPA * ((rPArPA / v2.dot(mec.rAA0, mec.rPA)) + 1);
+
+                    // console.log(`rPArPA: ${rPArPA}\nrPBrPB: ${rPBrPB}\nfrac: ${frac}\nscalar1: ${scalar1}\nscalar2: ${scalar2}`);
+
+                    return v2.isum(v2.iscl(v2.idif(v2.iscl(v2.tilde(mec.rPA), scalar1), v2.iscl(v2.tilde(mec.rPB), scalar2)), frac), mec.P);
+                },
+
+                //######################################################################
+                //#            Tangentialpol nach Gl. 9.8 (Goessner)
+                //######################################################################
+
+                get rPT() {
+                    let rPArPA = v2.dot(mec.rPA, mec.rPA),
+                        frac = 1 / v2.perp(mec.rPW, mec.rPA);
+
+                    return v2.iscl(v2.tilde(mec.rPW), rPArPA * frac);
+                },
+
+                //######################################################################
+                //#            Beschleunigungspol nach Gl. 9.9 (Goessner)
+                //######################################################################
+
+                get rWT() {
+                    return v2.dif(mec.rPT, mec.rPW)
+                },
+
+                get rPWb() {
+                    return v2.dif(mec.rPT, v2.neg(mec.rWT))
+                },
+
+                get rPQ() {
+                    let num = v2.perp(mec.rWT, mec.rPWb)
+                    denom = 1 / v2.dot(mec.rWT, mec.rWT);
+
+                    return v2.iscl(v2.tilde(mec.rWT), num * denom);
+                },
+
+
+                get WWaltLen() {
+                    return v2.len(v2.dif(mec.Walt, mec.W));
+                },
+
+                //######################################################################
+                //#            Tangentialkreis
+                //######################################################################
+
+                get centerTan() {
+                    return v2.isum(v2.scl(mec.rPT, 0.5), mec.P);
+                },
+
+                get radiusTan() {
+                    return 0.5 * v2.len(mec.rPT);
+                },
+
+                //######################################################################
+                //#            Wendepol 2. Ordnung nach Gl. 9.18 (Goessner)
+                //######################################################################
+
+                get rPW2() {
+                    let rPArPA = v2.dot(mec.rPA, mec.rPA),
+                        rPBrPB = v2.dot(mec.rPB, mec.rPB),
+                        perpPWPA = v2.perp(mec.rPW, mec.rPA),
+                        frac1 = rPArPA / (perpPWPA * v2.perp(mec.rPA, mec.rPB)),
+
+
+                        frac2 = (v2.dot(v2.dif(mec.rPW, mec.rPB), mec.rPB) * v2.perp(mec.rPW, mec.rPB)) / rPBrPB,
+
+                        // difPWPA = v2.dif(mec.rPW,mec.rPA),
+                        // dotdifPA = v2.dot(difPWPA,mec.rPB),
+                        // frac3num = dotdifPA*perpPWPA,
+                        // frac3 = frac3num / rPArPA,
+
+                        frac3 = (v2.dot(v2.dif(mec.rPW, mec.rPA), mec.rPB) * v2.perp(mec.rPW, mec.rPA)) / rPArPA
+                        ;
+
+                    // console.log(`difPWPA = ${difPWPA}, dotdifPA = ${dotdifPA}, frac3num = ${frac3num}, frac3a = ${frac3a}, frac3 = ${frac3}`);
+
+                    return v2.dif(mec.rPA, v2.scl(v2.tilde(mec.rPA), frac1 * (frac2 - frac3)));
+                },
+
+                //#########################################################################################
+                //#            Tangentialpol 2. Ordnung nach Gl. 9.19 (rein geometrisch, Goessner)
+                //#########################################################################################
+
+                get rPT2() {
+                    let num = 3 * v2.perp(mec.rPW, mec.rPA) / v2.dot(mec.rPA, mec.rPA),
+
+                        rPArPA = v2.dot(mec.rPA, mec.rPA),
+                        rPBrPB = v2.dot(mec.rPB, mec.rPB),
+                        frac1 = 3 / v2.perp(mec.rPA, mec.rPB),
+                        frac2 = (v2.dot(v2.dif(mec.rPW, mec.rPB), mec.rPB) * v2.perp(mec.rPW, mec.rPB)) / rPBrPB,
+                        frac3 = (v2.dot(v2.dif(mec.rPW, mec.rPA), mec.rPB) * v2.perp(mec.rPW, mec.rPA)) / rPArPA,
+                        frac4 = (v2.dot(mec.rPW, mec.rPA) / rPArPA - 1) * (v2.dot(mec.rPW, mec.rPA) / rPArPA - 1),
+                        denom = frac1 * (frac2 - frac3) - frac4
+                        ;
+
+                    // console.log(`difPWPA = ${difPWPA}, dotdifPA = ${dotdifPA}, frac3num = ${frac3num}, frac3a = ${frac3a}, frac3 = ${frac3}`);
+
+                    return v2.scl(v2.tilde(mec.rPW2), num * denom);
+                },
+
+                //######################################################################
+                //#            Ruckpol 2. Ordnung nach Gl. 9.20 (Goessner)
+                //######################################################################
+
+                get rW2T2() {
+                    return v2.dif(mec.rPT2, mec.rPW2);
+                },
+
+                get rPJ() {
+                    let rW2T2rW2T2 = v2.dot(mec.rW2T2, mec.rW2T2),
+                        frac = v2.perp(mec.rW2T2, mec.rPW2) / rW2T2rW2T2
+                        ;
+
+                    // console.log(`difPWPA = ${difPWPA}, dotdifPA = ${dotdifPA}, frac3num = ${frac3num}, frac3a = ${frac3a}, frac3 = ${frac3}`);
+
+                    return v2.scl(v2.tilde(mec.rW2T2), frac);
+                },
+
+                //######################################################################
+                //#            Wendekreis 2. Ordnung
+                //######################################################################
+
+                get centerW2() {
+                    return v2.isum(v2.scl(mec.rPW2, 0.5), mec.P);
+                },
+
+                get radiusW2() {
+                    return 0.5 * v2.len(mec.rPW2);
+                },
+
+                //######################################################################
+                //#            Tangentialkreis 2. Ordnung
+                //######################################################################
+
+                get centerTan2() {
+                    return v2.isum(v2.scl(mec.rPT2, 0.5), mec.P);
+                },
+
+                get radiusTan2() {
+                    return 0.5 * v2.len(mec.rPT2);
+                },
+
+                //######################################################################
+                //#            Undulationspunkt nach Gl. 9.21 (Goessner)
+                //######################################################################
+
+                get rWW2() {
+                    return v2.dif(mec.rPW2, mec.rPW);
+                },
+
+                get rPU() {
+                    let rWW2rWW2 = v2.dot(mec.rWW2, mec.rWW2),
+                        frac = v2.perp(mec.rWW2, mec.rPW) / rWW2rWW2
+                        ;
+
+                    // console.log(`difPWPA = ${difPWPA}, dotdifPA = ${dotdifPA}, frac3num = ${frac3num}, frac3a = ${frac3a}, frac3 = ${frac3}`);
+
+                    return v2.scl(v2.tilde(mec.rWW2), frac);
+                },
+
+                //######################################################################
+                //#            Kinematik
+                //######################################################################
+
+                get ephi() {
+                    return { x: Math.cos(this.phi), y: Math.sin(this.phi) };
+                },
+
+                get g() {
+                    return { x: this.d2 * this.ealpha.x - this.a * this.ephi.x, y: this.d2 * this.ealpha.y - this.a * this.ephi.y };
+                },
+
+                get gg() {
+                    return this.a * this.a + this.d2 * this.d2 - 2 * this.a * this.d2 * Math.cos(this.alpha - this.phi);
+                },
+
+                get d2() {
+                    return Math.sqrt(this.d * this.d + this.e * this.e);
+                },
+
+                get alpha() {
+                    return Math.atan(this.e / this.d);
+                },
+
+                get ealpha() {
+                    return { x: Math.cos(this.alpha), y: Math.sin(this.alpha) };
+                },
+
+                get theta() {
+                    var gg = this.gg, bb_gg = (this.b * this.b) / gg, g = this.g,
+                        lambda = 0.5 * (bb_gg - this.c * this.c / gg + 1),
+                        mue = mec.assembly * Math.sqrt(bb_gg - lambda * lambda);
+                    return Math.atan2((1 / this.b) * (lambda * g.y + mue * g.x), (1 / this.b) * (lambda * g.x - mue * g.y))
+                },
+
+                get etheta() {
+                    return { x: Math.cos(this.theta), y: Math.sin(this.theta) };
+                },
+
+                get psi() {
+                    var etheta = this.etheta;
+                    return Math.atan2((1 / this.c) * (this.b * etheta.y - this.g.y), (1 / this.c) * (this.b * etheta.x - this.g.x))
+                },
+
+                get epsi() {
+                    return { x: Math.cos(this.psi), y: Math.sin(this.psi) };
+                },
+
+                //######################################################################
+                //#            Punkte
+                //######################################################################
+
+                A0: { x: 0, y: 0 },
+
+                get B0() {
+                    return { x: this.A0.x + this.d, y: this.A0.y + this.e };
+                },
+
+                get A() {
+                    return { x: this.A0.x + this.a * this.ephi.x, y: this.A0.y + this.a * this.ephi.y };
+                },
+
+                get B() {
+                    return { x: this.B0.x + this.c * this.epsi.x, y: this.B0.y + this.c * this.epsi.y };
+                }
+            },
+
+            g = g2(),
+            pol = g2().cir(0, 0, 6, { ls: "@nodcolor", fs: "rgba(255, 153, 0, 0.8)", lwnosc: true })
+                .cir(0, 0, 2.5, { ls: "@nodcolor", fs: "@nodcolor" });
+        pol2 = g2().cir(0, 0, 6, { ls: "@nodcolor", fs: "lightgreen", lwnosc: true })
+            .cir(0, 0, 2.5, { ls: "@nodcolor", fs: "@nodcolor" });
+        pol3 = g2().cir(0, 0, 6, { ls: "@nodcolor", fs: "rgba(255, 102, 0, 1)", lwnosc: true })
+            .cir(0, 0, 2.5, { ls: "@nodcolor", fs: "@nodcolor" });
+        world = g2().clr().cartesian().style({ foc: "white" })
+            .rec(-width, -height, 2 * width, 2 * height, { ls: "rgba(52, 76, 107, 1)", fs: "rgba(52, 76, 107, 1)" })  // blueprint blue rgba(52, 76, 107, 1)
+            .grid("rgba(255, 255, 255, 0.1)", 100)
+            .grid("rgba(255, 255, 255, 0.1)", 20)
+            .pan((width - (mec.a + mec.d)) / 2, (height - mec.c) / 2)
+            .use(g)
+            .use("gnd").label("A0", "se"),
+
+            dirty = true,
+
+            steps = {
+                0: "Bekannt ist die Lage zweier Punkte (A, B) eines Gliedes, sowie deren Krümmungsmittelpunkte A\u2080 und B\u2080",
+                1: "Ermittlung des Momentanpols P im Schnittpunkt der Geraden AA\u2080 und BB\u2080.",
+                2: "Bestimmung des Relativpols I zwischen Kurbel und Schwinge im Schnittpunkt der Geraden AB und A\u2080B\u2080",
+                3: "Festlegung der Kollineationsachse als Gerade durch P und I.",
+                4: "Die Parallele zu A\u2080B\u2080 durch P liefert im Schnittpunkt mit AB den Hilfspunkt K.",
+                5: "Die Parallele zu PI durch diesen Hilfspunkt K schneidet die Gerade AA\u2080 in Aw und die Gerade BB\u2080 in Bw. Aw und Bw liegen beide auf dem Wendekreis.",
+                6: "Die Senkrechten in Aw zu AA\u2080 und in Bw zu BB\u2080 schneiden sich im Wendepol W."
+            },
+
+            panel = QuickSettings.create(10, 10, "Steuerung")
+                //  .addImage("","https://jauhl.github.io/img/fhlogo.svg")
+                .addProgressBar("Fortschritt", 6, mec.step, "numbers")
+                .addButton("Schritt weiter ▶", function (value) { if (mec.step < 6) { mec.step += 1; dirty = true; panel.setValue("Fortschritt", mec.step); } updateOutput(); }) // ▶
+                .addButton("Schritt zurück ◀", function (value) { if (mec.step > 0) { mec.step -= 1; dirty = true; panel.setValue("Fortschritt", mec.step); } updateOutput(); }) // ◀
+                .addBoolean("Wendekreis anzeigen", false, function () { dirty = true; })
+                .addBoolean("Tangentialkreis anzeigen", false, function () { dirty = true; })
+                .addBoolean("Kreise 2. Ordnung anzeigen", false, function () { dirty = true; })
+                .addBoolean("alt. Wendekreis anzeigen", false, function () { dirty = true; })
+                .addBoolean("alt. Wendepol (Schritt 6)", false, function () { dirty = true; })
+                .addBoolean("Pole anzeigen", false, function () { dirty = true; })
+                .addRange("φ", 0, 360, mec.phi * 180 / pi, 1, function (value) { mec.phi = value / 180 * pi; dirty = true; })
+                .addNumber("a", 0, 900, mec.a, "any", function (value) { mec.a = value; dirty = true; })
+                .addNumber("b", 0, 900, mec.b, "any", function (value) { mec.b = value; dirty = true; })  // "b", 0, 300, 150, 1
+                .addNumber("c", 0, 900, mec.c, "any", function (value) { mec.c = value; dirty = true; })  // "c", 0, 300, 100, 1
+                .addNumber("d (rein horizontal)", 1, 900, mec.d, 1, function (value) { mec.d = value; dirty = true; })
+                .addNumber("e (rein vertikal)", -300, 900, mec.e, 1, function (value) { mec.e = value; dirty = true; })
+                .addButton("Montagerichtung umkehren", function (value) { mec.assembly *= -1; dirty = true; }),
+
+            panel2 = QuickSettings.create(width - 310, 10, "Output")
+                .addTextArea("aktueller Schritt:")
+                .setWidth(300)
+            ;
+
+        /*
+         *  Initialisierung
+         */
+
+        window.onresize = function () {
+            width = cnv.width = window.innerWidth;
+            height = cnv.height = window.innerHeight;
+
+            panel2.setPosition(width - 310, 10);
+
+            world = g2().del().clr().cartesian().style({ foc: "white", fs: "transparent" })  // wenn hier .del(), wendekreis fs transparent notwendig!
+                .rec(-width, -height, 2 * width, 2 * height, { ls: "rgba(52, 76, 107, 1)", fs: "rgba(52, 76, 107, 1)" })  // blueprint blue rgba(52, 76, 107, 1)
+                .grid("rgba(255, 255, 255, 0.1)", 100)
+                .grid("rgba(255, 255, 255, 0.1)", 20)
+                .pan((width - (mec.a + mec.d)) / 2, (height - mec.c) / 2)
+                .use(g)
+                .use("gnd").label("A0", "se");
+
+            dirty = true;
+        };
+
+        // Animation starten
+        updateOutput();
+        render();
+  </script>
+</body>
+</html>
