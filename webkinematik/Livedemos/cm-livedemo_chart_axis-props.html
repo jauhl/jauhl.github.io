@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <link href="https://gitcdn.xyz/repo/goessner/CodeMirror/master/theme/fh-do.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/codemirror/4.5.0/codemirror.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.40.2/lib/codemirror.css">
 </head>
 
 <body>
@@ -14,13 +14,13 @@
     <input id="reset" type="button" value="Reset" />
   </div>
   <textarea id="code" class="playable-code">
-g.cartesian()
+g.view({cartesian:true})
  .chart({ x:35,y:35,b:200,h:100,
           title:{ text:"sin(φ)"},
           xmin:-Math.PI/2, xmax:2*Math.PI,
           funcs:[
-            { fn:Math.sin, 
-              dx:Math.PI/30, 
+            { fn:Math.sin,
+              dx:Math.PI/30,
               fill:true
             }
           ],
@@ -37,18 +37,17 @@ g.cartesian()
        })
  .exe(ctx);</textarea>
 
-  <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
-  <script src="https://gitcdn.xyz/repo/goessner/g2-chart/master/g2.chart.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/codemirror/4.5.0/codemirror.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/codemirror/4.5.0/mode/javascript/javascript.js"></script>
+  <script src="https://gitcdn.xyz/repo/goessner/g2/master/src/g2.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.40.2/lib/codemirror.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.40.2/mode/javascript/javascript.js"></script>
   <script>
 
-var canvas = document.getElementById("canvas");
-var ctx = canvas.getContext("2d");
-var textarea = document.getElementById("code");
-var reset = document.getElementById("reset");
-var edit = document.getElementById("edit");
-var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+let textarea = document.getElementById("code");
+let reset = document.getElementById("reset");
+let edit = document.getElementById("edit");
+let editor = CodeMirror.fromTextArea(document.getElementById("code"), {
   mode:  "javascript",
   lineNumbers: true,
   theme: "fh-do",
@@ -57,8 +56,8 @@ var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
   viewportMargin: Infinity,
   lineWrapping: true
 });
-var code = editor.getValue();
-var g = g2();
+let code = editor.getValue();
+let g = g2();
 
 function drawCanvas() {
   g.del().clr();

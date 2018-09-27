@@ -1,9 +1,9 @@
-var mec = {
+let mec = {
     phi:0,
     a:170,
     b:50,
 
-    ephi: function() { return { x:Math.cos(this.phi), 
+    ephi: function() { return { x:Math.cos(this.phi),
                                 y:Math.sin(this.phi) }},
 
     A: function() {return { x:this.a*this.ephi().x,

@@ -2,27 +2,27 @@
 <html>
 <head>
     <meta charset='utf-8'>
-    <title>Schubschleife</title>      
+    <title>Schubschleife</title>
 </head>
 
 <body>
-    <h2>Schubschleife - Grundfall 1</h2>             
+    <h2>Schubschleife - Grundfall 1</h2>
     <canvas id="c" width="500" height="400" style="border-width:1px;border-style:solid"></canvas>
     <br>
     <label for="sslider">s:
     <input type="range" id="sslider" style="width:450px;vertical-align:middle;padding:0" min="-200" max="200" value="0">
     <output id="sout" for="sslider">0</output>mm
     </label>
-     
-    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
-    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>    
+
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/src/g2.js"></script>
+    
 
     <script>
 
-var cnv = document.getElementById('c'),
+let cnv = document.getElementById('c'),
     ctx = cnv.getContext('2d'),
     sslider = document.getElementById('sslider'),
-    sout = document.getElementById('sout'), 
+    sout = document.getElementById('sout'),
 
     s = 0, // Laufvariable
 
@@ -37,27 +37,26 @@ var cnv = document.getElementById('c'),
         // Gelenkpunkte
         get A() { return {x:s, y:0}; },
         get B() { return { x:0, y:this.h }; },
-        get C() { return { x:this.A.x + this.l*this.epsi.x, y:this.A.y + this.l*this.epsi.y }; } 
-    },  
- 
+        get C() { return { x:this.A.x + this.l*this.epsi.x, y:this.A.y + this.l*this.epsi.y }; }
+    },
+
     g = g2(),
 
     // baut und initialisiert statische Umgebung
-    world = g2().clr().cartesian()
-                .pan(250, 100) // Nullpunkt verschoben   
-                .use(g)
-                .use("nodfix", mec.B),
+    world = g2().clr().view({x:250,y:100,cartesian:true})
+                .use({grp:g})
+                .nodfix(mec.B),
 
     dirty = true  // wenn true gibt es was zu aktualisieren
     ;
 
 function position() {
     g.del()
-     .bar(mec.A, mec.C)
-     .slider(mec.B, mec.psi, {fs:"@nodfill"})
-     .use("nodflt", mec.A)
-     .use("nod", mec.C)
-}        
+     .bar({x1:mec.A.x, y1:mec.A.y, x2:mec.C.x, y2:mec.C.y,})
+     .slider({x:mec.B.x, y:mec.B.y, w:mec.psi, fs:"@nodfill"})
+     .nodflt(mec.A)
+     .nod(mec.C)
+}
 
 function render() {
     if (dirty) {

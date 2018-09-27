@@ -2,66 +2,64 @@
 <html>
 <head>
     <meta charset='utf-8'>
-    <title>Pendelrolle</title>      
+    <title>Pendelrolle</title>
 </head>
 
 <body>
-    <h2>Pendel</h2>             
+    <h2>Pendel</h2>
     <canvas id="c" width="600" height="400" style="border-width:1px;border-style:solid"></canvas>
-  
-    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
-    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>    
+
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/src/g2.js"></script>
 
     <script>
 
-var cnv = document.getElementById('c'),
+let cnv = document.getElementById('c'),
     ctx = cnv.getContext('2d'),
 
     pi = Math.PI
     g = 9.81,
     t0 = false,
 
-    l = 200, 
+    l = 200,
     R = 50,
 
     T = 2, // Periodendauer [s]
-    omega = (2*pi)/T, 
-    Amplitude = pi/2,
-    
+    omega = (2*pi)/T,
+    amplitude = pi/2,
+
     phi = 0,
-    phi_0 = (3/2)*pi,  // normalnull zeigt nach rechts, daher 3/4 versatz mathem. positiv 
+    phi_0 = (3/2)*pi,  // Normalnull zeigt nach rechts, daher 3/4 Versatz mathem. positiv
 
     mec = {
         get ephi() { return {x:Math.cos(phi), y:Math.sin(phi) }; },
-        get A()    { return {x:l*this.ephi.x, y:l*this.ephi.y, w:-phi*l/R}; }
+        get A()    { return {x:l*this.ephi.x, y:l*this.ephi.y}; }
     },
 
     pipe = [];  // Array aus Punkten zur Definition von .ground
 
 buildpipe();  // muss hier ausgeführt werden weil sonst pipe leer wenn world gebaut wird
- 
-var Pendel = g2(),
-    world = g2().clr().cartesian()
-                .pan(300, 300) // Nullpunkt verschoben
-                .use(Pendel)
-                .use("nodfix", {x:0, y:0, w:pi})
-                .ground(pipe, false, {h:10})
+
+let pendel = g2(),
+    world = g2().clr().view({x:300,y:300,cartesian:true})
+                .use({grp:pendel})
+                .nodfix({x:0, y:0, w:pi})
+                .ground({pts:pipe, closed:false, h:10})
     ;
 
 function position(t) {
-    phi = Amplitude*Math.sin(omega*t) + phi_0;
+    phi = amplitude*Math.sin(omega*t) + phi_0;
 
-    Pendel.del()
-          .bar({x:0, y:0}, mec.A)    
-          .pulley2(mec.A, R)  // phi*l/R aus Haftbedingung
-          .use("nod", mec.A)
-}        
+    pendel.del()
+          .bar({x1:0, y1:0, x2:mec.A.x, y2:mec.A.y})
+          .pulley2({x:mec.A.x, y:mec.A.y, r:R, w:-phi*l/R})  // phi*l/R aus Haftbedingung
+          .nod(mec.A)
+}
 
 function render(time) {
     if (!t0)
         t0 = time;
     position((time-t0)/1000);
-    world.exe(ctx); 
+    world.exe(ctx);
     requestAnimationFrame(render);
 }
 
@@ -71,7 +69,7 @@ function buildpipe() {
     }
 }
 
-requestAnimationFrame(render);
+render();
 
     </script>
 </body>

@@ -5,8 +5,7 @@
 </head>
 <body>
     <canvas id="canvas" width="750" height="270" ></canvas>
-    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
-    <script src="https://gitcdn.xyz/repo/goessner/g2-chart/master/g2.chart.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/src/g2.js"></script>
     <script>
 
 // aus Aufgabe 2.2
@@ -21,13 +20,13 @@ function buildgraph() {
 }
 
 
-var ctx = document.getElementById("canvas").getContext("2d"),
+let ctx = document.getElementById("canvas").getContext("2d"),
     mec = { // aus Aufgabe 2.2
         phi:0,
         a:170,
         b:50,
 
-        ephi: function() { return { x:Math.cos(this.phi), 
+        ephi: function() { return { x:Math.cos(this.phi),
                                     y:Math.sin(this.phi) }},
 
         A: function() {return { x:this.a*this.ephi().x,
@@ -40,12 +39,12 @@ var ctx = document.getElementById("canvas").getContext("2d"),
 
 buildgraph();
 
-g.cartesian()
+g.view({cartesian:true})
  .chart({ x:35, y:35, b:680, h:200,
           title:"Aufgabe 3.2 (2.2)",
-          funcs:[{ 
+          funcs:[{
               data:mec.values,
-              fill:true 
+              fill:true
           }],
           xaxis:{
               title:"x",

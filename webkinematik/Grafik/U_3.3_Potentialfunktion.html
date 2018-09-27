@@ -5,15 +5,14 @@
 </head>
 <body>
     <canvas id="canvas" width="750" height="270" ></canvas>
-    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
-    <script src="https://gitcdn.xyz/repo/goessner/g2-chart/master/g2.chart.min.js"></script>
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/src/g2.js"></script>
     <script>
 
-var ctx = document.getElementById("canvas").getContext("2d"),
+let ctx = document.getElementById("canvas").getContext("2d"),
     g = g2()
 ;
 
-g.cartesian()
+g.view({cartesian:true})
  .chart({ x:35, y:35, b:680, h:200,
           title:"1. Ableitung Potentialfunktion A 10.8",
           xmin:-0.1, xmax:Math.PI/2,
@@ -21,8 +20,8 @@ g.cartesian()
           funcs:[
               {
                 fn: function(x) {return Math.sin(x)*(1 - 2*Math.cos(x)) ;},
-                dx:Math.PI/30    
-              } 
+                dx:Math.PI/30
+              }
           ],
           xaxis:{
               title:"φ [rad]",

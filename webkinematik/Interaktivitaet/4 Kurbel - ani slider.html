@@ -2,11 +2,11 @@
 <html>
 <head>
     <meta charset='utf-8'>
-    <title>Kurbel</title>      
+    <title>Kurbel</title>
 </head>
 
 <body>
-    <h2>Kurbel</h2>             
+    <h2>Kurbel</h2>
     <canvas id="c" width="300" height="300" style="border-width:1px;border-style:solid"></canvas>
     <br>
     <button id="b">Start/Stop</button>
@@ -19,7 +19,7 @@
         <option value="4">4x</option>
     </select>
     <br>
-    <output id="Periodendauer" for="speed">T: 6s</output>	
+    <output id="Periodendauer" for="speed">T: 6s</output>
     <br><br>
     <input type="checkbox" id="direction" >
     <label for="direction"> Drehrichtung umkehren</label>
@@ -28,20 +28,20 @@
     <input type="range" id="lslider" style="width:240px;vertical-align:middle;padding:0" min="20" max="150" value="100">
     <output id="lout" for="lslider" >100</output>mm
     </label>
-  
-    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
-    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>    
+
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/src/g2.js"></script>
+    
 
     <script>
 
-var cnv = document.getElementById('c'),
+let cnv = document.getElementById('c'),
     ctx = cnv.getContext('2d'),
     b = document.getElementById('b'),
     speed = document.getElementById('speed'),
     Periodendauer = document.getElementById('Periodendauer'),
     Drehrichtung = document.getElementById('direction'),
     lslider = document.getElementById('lslider'),
-    lout = document.getElementById('lout'), 
+    lout = document.getElementById('lout'),
 
     pi = Math.PI,
     l = 100,  // Laenge der Kurbel
@@ -53,15 +53,14 @@ var cnv = document.getElementById('c'),
     mec = {
         get ephi() { return {x:Math.cos(phi), y:Math.sin(phi)}; },
         get A() { return {x:l*mec.ephi.x, y:l*mec.ephi.y}; }
-    },  
- 
+    },
+
     Kurbel = g2(),  // definiert Kurbel als g2() Objekt
 
     // baut und initialisiert statische Umgebung
-    world = g2().clr().cartesian()
-                .pan(150, 150) // Nullpunkt verschoben   
-                .use(Kurbel)
-                .use("nodfix"),
+    world = g2().clr().view({x:150,y:150,cartesian:true})
+                .use({grp:Kurbel})
+                .nodfix(),
 
     run = true  // Boolean als Schalter um zu pruefen ob Animation laeuft
     ;
@@ -69,18 +68,18 @@ var cnv = document.getElementById('c'),
 function position() {
     // baut dynamische Kurbel auf
     Kurbel.del()
-          .lin(0, 0, mec.A.x, mec.A.y, {lw:3})
-          .use("nod", mec.A);
-    
-    // inkrementiert phi 
+          .lin({x1:0, y1:0, x2:mec.A.x, y2:mec.A.y, lw:3})
+          .nod(mec.A);
+
+    // inkrementiert phi
     if (run) {
         if (Drehrichtung.checked) {
             phi -= speedmod*pi/180;
         } else {
-            phi += speedmod*pi/180; 
+            phi += speedmod*pi/180;
         }
     }
-}        
+}
 
 function render() {
     position();  // aktualisiere Position

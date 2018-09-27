@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <link href="https://gitcdn.xyz/repo/goessner/CodeMirror/master/theme/fh-do.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/codemirror/4.5.0/codemirror.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.40.2/lib/codemirror.css">
 </head>
 
 <body>
@@ -20,17 +20,16 @@ ctx.lineTo(150, 150);  // definiere Linie von letzter Position zu diesem Punkt
 ctx.closePath();       // beende den Pfad
 ctx.stroke();          // zeichne den eben erstellten Pfad</textarea>
 
-  <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
-  <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/codemirror/4.5.0/codemirror.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/codemirror/4.5.0/mode/javascript/javascript.js"></script>
+  <script src="https://gitcdn.xyz/repo/goessner/g2/master/src/g2.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.40.2/lib/codemirror.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.40.2/mode/javascript/javascript.js"></script>
   <script>
 
-var canvas = document.getElementById("canvas");
-var ctx = canvas.getContext("2d");
-var reset = document.getElementById("reset");
-var edit = document.getElementById("edit");
-var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+let reset = document.getElementById("reset");
+let edit = document.getElementById("edit");
+let editor = CodeMirror.fromTextArea(document.getElementById("code"), {
   mode:  "javascript",
   lineNumbers: true,
   theme: "fh-do",
@@ -39,7 +38,7 @@ var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
   viewportMargin: Infinity,
   lineWrapping: true
 });
-var code = editor.getValue();
+let code = editor.getValue();
 
 function drawCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);

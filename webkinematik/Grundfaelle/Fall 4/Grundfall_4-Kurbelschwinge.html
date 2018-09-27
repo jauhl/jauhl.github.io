@@ -2,28 +2,27 @@
 <html>
 <head>
     <meta charset='utf-8'>
-    <title>Kurbelschwinge</title>      
+    <title>Kurbelschwinge</title>
 </head>
 
 <body>
-    <h2>Kurbelschwinge - Grundfall 4</h2>             
+    <h2>Kurbelschwinge - Grundfall 4</h2>
     <canvas id="c" width="600" height="400" style="border-width:1px;border-style:solid"></canvas>
     <br>
     <label for="phislider">&phi;:
     <input type="range" id="phislider" style="width:550px;vertical-align:middle;padding:0" min="0" max="360" value="0">
     <output id="phiout" for="phislider">0</output><span id="grad">°</span>
     </label>
-     
-    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
-    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>    
 
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/src/g2.js"></script>
+    
     <script>
 
-var cnv = document.getElementById('c'),
+let cnv = document.getElementById('c'),
     ctx = cnv.getContext('2d'),
     phislider = document.getElementById('phislider'),
     phiout = document.getElementById('phiout')
-    grad = document.getElementById('grad'), 
+    grad = document.getElementById('grad'),
 
     pi = Math.PI,
 
@@ -38,14 +37,14 @@ var cnv = document.getElementById('c'),
         get g()   { return {x:this.d - this.a*Math.cos(phi), y:- this.a*Math.sin(phi)}; },
         get gg()  { return this.a*this.a + this.d*this.d - 2*this.a*this.d*Math.cos(phi); },
         get theta() {
-            var gg = this.gg, bb_gg = (this.b*this.b)/gg, g = this.g,
+            let gg = this.gg, bb_gg = (this.b*this.b)/gg, g = this.g,
                 lambda = 0.5*(bb_gg - this.c*this.c/gg + 1),
                 mue = Math.sqrt(bb_gg - lambda*lambda);
             return Math.atan2( (1/this.b)*(lambda*g.y + mue*g.x), (1/this.b)*(lambda*g.x - mue*g.y) )
         },
         get etheta() { return { x:Math.cos(this.theta), y:Math.sin(this.theta)}; },
         get psi() {
-            var etheta = this.etheta;
+            let etheta = this.etheta;
             return Math.atan2( (1/this.c)*(this.b*etheta.y - this.g.y), (1/this.c)*(this.b*etheta.x - this.g.x) )
         },
         get epsi() { return { x:Math.cos(this.psi), y:Math.sin(this.psi)}; },
@@ -55,26 +54,25 @@ var cnv = document.getElementById('c'),
         get B0() { return {x:this.d, y:0} },
         get A() { return {x:this.A0.x + this.a*this.ephi.x, y:this.A0.y + this.a*this.ephi.y}; },
         get B() { return {x:this.B0.x + this.c*this.epsi.x, y:this.B0.y + this.c*this.epsi.y}; }
-    },  
- 
+    },
+
     g = g2(),
 
     // baut und initialisiert statische Umgebung
-    world = g2().clr().cartesian()
-                .pan(150, 150) // Nullpunkt verschoben   
-                .use(g)
-                .use("nodfix")
-                .use("nodfix",mec.B0),
+    world = g2().clr().view({x:150,y:150,cartesian:true})
+                .use({grp:g})
+                .nodfix()
+                .nodfix(mec.B0),
 
-    dirty = true  // wenn true gibt es was zu aktualisieren
+    dirty = true  // wenn true gibt es etwas zu aktualisieren
     ;
 
 function position() {
     g.del()
-     .link2([mec.A0.x, mec.A0.y, mec.A.x, mec.A.y, mec.B.x, mec.B.y, mec.B0.x, mec.B0.y ], false)
-     .use("nod",mec.A)
-     .use("nod",mec.B)
-}        
+     .link2({pts:[mec.A0.x, mec.A0.y, mec.A.x, mec.A.y, mec.B.x, mec.B.y, mec.B0.x, mec.B0.y ], closed:false})
+     .nod(mec.A)
+     .nod(mec.B)
+}
 
 function render() {
     if (dirty) {

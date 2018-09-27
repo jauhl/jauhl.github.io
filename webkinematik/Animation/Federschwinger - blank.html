@@ -2,19 +2,18 @@
 <html>
 <head>
     <meta charset='utf-8'>
-    <title>Federschwinger</title>      
+    <title>Federschwinger</title>
 </head>
 
 <body>
-    <h2>ungedämpfter Federschwinger</h2>             
+    <h2>ungedämpfter Federschwinger</h2>
     <canvas id="c" width="315" height="500" style="border-width:1px;border-style:solid"></canvas>
-  
-    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
-    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>    
+
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/src/g2.js"></script>
 
     <script>
 
-var cnv = document.getElementById('c'),
+let cnv = document.getElementById('c'),
     ctx = cnv.getContext('2d'),
 
     pi = Math.PI,
@@ -25,18 +24,21 @@ var cnv = document.getElementById('c'),
     y_0 = 200,
 
     A = {x:0, y:0},
-    B = {x:A.x, y:y_0},    
+    B = {x:A.x, y:y_0},
 
     Federschwinger = g2(),
     world = g2().clr()
-                .pan(150, 50)
-                         
-                .style({lw:2, foz:15, fow:'bold'})    
-                .use(Federschwinger)
-                .ground([A.x-20, A.y, A.x+20, A.y])
+                .view({x:150,y:50})
+
+                .beg({lw:2, foz:15, fow:'bold'})
+                    .use({grp:Federschwinger})
+                    .ground({pts:[A.x-20, A.y, A.x+20, A.y]})
+                .end()
+
+                // Skala
+                .lin({x1:-75, y1:0, x2:-75, y2:400}).mark({mrk:'tick', loc:[0, 1/8, 2/8, 3/8, 4/8, 5/8, 6/8, 7/8, 1], dir:1})
+                    .txt({str:'0',x:-68,y:4}).txt({str:'200',x:-68,y:204}).txt({str:'400',x:-68,y:404})
                 
-                .lin(-75, 0, -75, 400).mark('tick',[0, 1/8, 2/8, 3/8, 4/8, 5/8, 6/8, 7/8, 1], 1)
-                    .txt('0',-68,4).txt('200',-68,204).txt('400',-68,404)
     ;
 
 function position(/* ... */) {
@@ -44,11 +46,11 @@ function position(/* ... */) {
 
     Federschwinger.del()
                   // ...
-                      .label('k','mid',-20)
+                        .label({str:'k',loc:'mid',off:-20})
                   // ...
-                      .label('m')
-    
-}        
+                        .label({str:'m'})
+
+}
 
 function render(/* ... */) {
     if (/* ... */)

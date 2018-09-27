@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <link href="https://gitcdn.xyz/repo/goessner/CodeMirror/master/theme/fh-do.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/codemirror/4.5.0/codemirror.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.40.2/lib/codemirror.css">
 </head>
 
 <body>
@@ -14,33 +14,36 @@
     <input id="reset" type="button" value="Reset" />
   </div>
   <textarea id="code" class="playable-code">
-g.cartesian()
- .rope({x:50, y:50}, -20, {x:125,y:50}, -30) 
- .pulley({x:50, y:50}, 20) 
- .use("nod", {x:50, y:50}) 
- .pulley2({x:125, y:50, w:Math.PI/3}, 30) 
- .use("nod", {x:125, y:50})
+g.view({cartesian:true})
+ .rope({p1:{x:50,y:50},r1:-20,p2:{x:125,y:50},r2:-30})
+ .pulley({x:50,y:50,r:20})
+ .nod({x:50,y:50})
+ .pulley2({x:125,y:50,w:Math.PI/2,r:30})
+ .nod({x:125,y:50})
  .exe(ctx)</textarea>
 
-  <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
-  <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/codemirror/4.5.0/codemirror.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/codemirror/4.5.0/mode/javascript/javascript.js"></script>
+ <!-- <script src="https://rawgit.com/klawr/jauhl.github.io/master/src/g2.js"></script>
+ <script src="https://rawgit.com/klawr/jauhl.github.io/master/src/g2.ext.js"></script>
+ <script src="https://rawgit.com/klawr/jauhl.github.io/master/src/g2.mec.js"></script> -->
+ <script src="https://gitcdn.xyz/repo/goessner/g2/master/src/g2.js"></script>
+ 
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.40.2/lib/codemirror.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.40.2/mode/javascript/javascript.js"></script>
   <script>
 
-var canvas = document.getElementById("canvas");
-var ctx = canvas.getContext("2d");
-var reset = document.getElementById("reset");
-var edit = document.getElementById("edit");
-var g = g2();
-var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+let reset = document.getElementById("reset");
+let edit = document.getElementById("edit");
+let g = g2();
+let editor = CodeMirror.fromTextArea(document.getElementById("code"), {
   mode:  "javascript",
   lineNumbers: true,
   theme: "fh-do",
   styleActiveLine: true,
   matchBrackets: true,
 });
-var code = editor.getValue();
+let code = editor.getValue();
 
 function drawCanvas() {
   g.del().clr();

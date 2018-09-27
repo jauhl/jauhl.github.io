@@ -2,27 +2,26 @@
 <html>
 <head>
     <meta charset='utf-8'>
-    <title>Kurbelschleife</title>      
+    <title>Kurbelschleife</title>
 </head>
 
 <body>
-    <h2>Kurbelschleife - Grundfall 5</h2>             
+    <h2>Kurbelschleife - Grundfall 5</h2>
     <canvas id="c" width="400" height="300" style="border-width:1px;border-style:solid"></canvas>
     <br>
     <label for="phislider">&phi;:
     <input type="range" id="phislider" style="width:330px;vertical-align:middle;padding:0" min="0" max="360" value="0">
     <output id="phiout" for="phislider">0</output>°
     </label>
-     
-    <script src="https://gitcdn.xyz/repo/goessner/g2/master/g2.min.js"></script>
-    <script src="https://gitcdn.xyz/repo/goessner/g2-mec/master/g2.mec.min.js"></script>    
 
+    <script src="https://gitcdn.xyz/repo/goessner/g2/master/src/g2.js"></script>
+    
     <script>
 
-var cnv = document.getElementById('c'),
+let cnv = document.getElementById('c'),
     ctx = cnv.getContext('2d'),
     phislider = document.getElementById('phislider'),
-    phiout = document.getElementById('phiout'), 
+    phiout = document.getElementById('phiout'),
 
     pi = Math.PI,
 
@@ -47,27 +46,26 @@ var cnv = document.getElementById('c'),
         get A() { return {x:a*this.ephi.x, y:a*this.ephi.y}; },
         get B() { return {x:this.B0.x + e*this.epsi.x, y:this.B0.y + e*this.epsi.y}; },
         get C() { return {x:this.B.x + (smax + 25)*(- this.epsi.y), y:this.B.y + (smax + 25)*this.epsi.x}; }
-    },  
- 
+    },
+
     g = g2(),
 
     // baut und initialisiert statische Umgebung
-    world = g2().clr().cartesian()
-                .pan(150, 180) // Nullpunkt verschoben   
-                .use(g)
-                .use("nodfix")
-                .use("nodfix", mec.B0),
+    world = g2().clr().view({x:150,y:150,cartesian:true})
+                .use({grp:g})
+                .nodfix()
+                .nodfix(mec.B0),
 
     dirty = true  // wenn true gibt es was zu aktualisieren
     ;
 
 function position() {
     g.del()
-     .link2([mec.B0.x, mec.B0.y, mec.B.x, mec.B.y, mec.C.x, mec.C.y], false)
-     .slider(mec.A, (mec.psi+pi/2), {fs:"@nodfill"})
-     .bar2(mec.A0, mec.A)
-     .use("nod",mec.A)
-}        
+     .link2({pts:[mec.B0.x, mec.B0.y, mec.B.x, mec.B.y, mec.C.x, mec.C.y], closed:false})
+     .slider({x:mec.A.x, y:mec.A.y, w:(mec.psi + pi/2), fs:"@nodfill"})
+     .bar2({x1:mec.A0.x, y1:mec.A0.y ,x2:mec.A.x, y2:mec.A.y})
+     .nod(mec.A)
+}
 
 function render() {
     if (dirty) {
